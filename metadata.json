@@ -1,0 +1,6 @@
+{
+  "name": "Bảng Tuần Hoàn & Quy Luật Bán Kính Nguyên Tử - Hóa 10",
+  "description": "Ứng dụng học tập tương tác Bảng tuần hoàn 118 nguyên tố hóa học, quy luật biến đổi tuần hoàn bán kính nguyên tử và hệ thống bài tập trắc nghiệm có chấm điểm dành cho học sinh.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

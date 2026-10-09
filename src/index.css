@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+@keyframes orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.orbit-ring-slow {
+  transform-origin: 110px 110px;
+  animation: orbit-spin 22s linear infinite;
+}
+
+.orbit-ring-medium {
+  transform-origin: 110px 110px;
+  animation: orbit-spin-reverse 15s linear infinite;
+}
+
+.orbit-ring-fast {
+  transform-origin: 110px 110px;
+  animation: orbit-spin 10s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring-slow,
+  .orbit-ring-medium,
+  .orbit-ring-fast {
+    animation: none;
+  }
+}
+
+
