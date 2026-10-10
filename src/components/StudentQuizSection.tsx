@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'motion/react';
+import confetti from 'canvas-confetti';
 import { QUIZ_QUESTIONS, QuizQuestion } from '../data/questions';
 import {
   UserCheck,
@@ -17,6 +18,7 @@ import {
   Users,
   BarChart2,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 
 export interface StudentProfile {
@@ -213,12 +215,53 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
     });
   };
 
+  const triggerCelebrationFireworks = useCallback(() => {
+    const sgkColors = ['#38bdf8', '#f472b6', '#fbbf24', '#34d399', '#818cf8'];
+
+    // Center celebratory burst
+    confetti({
+      particleCount: 90,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: sgkColors,
+    });
+
+    // Left and right firework cannons after a short delay
+    setTimeout(() => {
+      confetti({
+        particleCount: 60,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0.08, y: 0.65 },
+        colors: sgkColors,
+      });
+      confetti({
+        particleCount: 60,
+        angle: 120,
+        spread: 55,
+        origin: { x: 0.92, y: 0.65 },
+        colors: sgkColors,
+      });
+    }, 220);
+
+    setTimeout(() => {
+      confetti({
+        particleCount: 75,
+        spread: 100,
+        startVelocity: 38,
+        origin: { x: 0.5, y: 0.45 },
+        colors: sgkColors,
+      });
+    }, 480);
+  }, []);
+
   const handleSelectOption = (q: QuizQuestion, optionIdx: number) => {
     if (selectedAnswers[q.id] !== undefined) return;
-    setSelectedAnswers((prev) => ({
-      ...prev,
+    const nextAnswers = {
+      ...selectedAnswers,
       [q.id]: optionIdx,
-    }));
+    };
+    setSelectedAnswers(nextAnswers);
 
     if (optionIdx === q.correctIndex) {
       const nextStreak = streak + 1;
@@ -228,6 +271,11 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
       }
     } else {
       setStreak(0);
+    }
+
+    // Fire celebratory confetti fireworks when the student completes all questions!
+    if (Object.keys(nextAnswers).length === QUIZ_QUESTIONS.length) {
+      triggerCelebrationFireworks();
     }
   };
 
@@ -313,6 +361,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
     saveHistoryToStorage(updated);
     setSavedCurrentAttempt(true);
     setLeaderboardClassFilter(student.className.toUpperCase());
+    triggerCelebrationFireworks();
   };
 
   const handleLoadDemoRecords = () => {
@@ -884,6 +933,40 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
               );
             })}
           </div>
+
+          {/* Celebratory Completion Banner when all questions are answered */}
+          {answeredCount === totalQuestions && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="bg-gradient-to-r from-sky-900 via-indigo-950 to-emerald-950 text-white border-2 border-amber-400/80 rounded-2xl p-5 sm:p-6 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            >
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-amber-300 uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>Chúc mừng hoàn thành 100% bộ câu hỏi ({totalQuestions}/{totalQuestions} câu)</span>
+                </div>
+                <h3 className="font-display text-xl sm:text-2xl font-extrabold text-white">
+                  Tuyệt vời, {student.fullName}! Bạn đạt {scoreOutOf10} / 10 điểm ({currentGradeLabel})
+                </h3>
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  Bạn đã trả lời đúng <strong className="text-emerald-300">{correctCount}/{totalQuestions} câu</strong>. Hãy bấm lưu điểm bên dưới để ghi danh vào Bảng xếp hạng Top 5 của lớp!
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={triggerCelebrationFireworks}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-display text-xs font-extrabold transition-all cursor-pointer shadow-sm"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Bắn pháo hoa chúc mừng</span>
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* IDEA 3 PART A: PHIẾU KẾT QUẢ HỌC TẬP CÁ NHÂN & PHÂN TÍCH NĂNG LỰC */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-xs">

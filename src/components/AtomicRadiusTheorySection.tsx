@@ -604,13 +604,13 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                               const circleDiameter = Math.max(8, Math.min(28, Math.round(r / 8.5)));
                               const shade =
                                 r >= 200
-                                  ? 'bg-indigo-950 text-white'
+                                  ? 'bg-indigo-950 text-white border border-indigo-700'
                                   : r >= 155
-                                  ? 'bg-indigo-700 text-white'
+                                  ? 'bg-indigo-700 text-white border border-indigo-500'
                                   : r >= 125
-                                  ? 'bg-indigo-400 text-slate-950'
+                                  ? 'bg-indigo-500 text-white border border-indigo-400'
                                   : r >= 95
-                                  ? 'bg-indigo-200 text-slate-900'
+                                  ? 'bg-indigo-100 text-slate-900 border border-indigo-200'
                                   : 'bg-indigo-50 text-slate-800 border border-indigo-200';
                               return (
                                 <button
