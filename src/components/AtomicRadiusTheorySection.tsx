@@ -305,7 +305,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
               onClick={onJumpToQuiz}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <span>Làm 18 câu Bài tập vận dụng</span>
+              <span>Làm bài tập vận dụng (21 câu TN + 3 câu Đ/S)</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -317,15 +317,15 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
             [
               {
                 id: 'overview_table',
-                step: 'Phần I · Bảng tuần hoàn',
-                title: 'I. Sơ lược Bảng tuần hoàn',
-                desc: '1. Nguyên tắc xây dựng (e hóa trị) · 2. Cấu tạo: Ô, Chu kì, Nhóm A & B',
+                step: 'Trọn bộ Đề cương Lý thuyết',
+                title: 'I. Bảng tuần hoàn & II. Bán kính nguyên tử',
+                desc: 'Toàn bộ nội dung Phần I (Nguyên tắc, Ô, Chu kì, Nhóm) & Phần II (Khái niệm, Quy luật, Giải thích, Năng lượng ion hóa I₁)',
               },
               {
                 id: 'what_is_it',
-                step: 'Phần II.1 · Khái niệm',
-                title: '1. Khái niệm Bán kính nguyên tử',
-                desc: 'Định nghĩa chuẩn, sự phụ thuộc lực hút hạt nhân – lớp ngoài cùng & r = d/2',
+                step: 'Mô hình trực quan II.1',
+                title: 'Sơ đồ đo Bán kính (r = d/2)',
+                desc: 'Khái niệm, đơn vị đo Picomet (pm) / Angstrom (Å) & mô hình xác định r = d/2',
               },
               {
                 id: 'how_it_changes',
@@ -385,7 +385,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                 </div>
                 <p
                   className={`text-xs mt-1.5 leading-relaxed ${
-                    isActive ? 'text-slate-300' : 'text-slate-500'
+                    isActive ? 'text-slate-200' : 'text-slate-600'
                   }`}
                 >
                   {item.desc}
@@ -425,14 +425,14 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                       Các nguyên tố được sắp xếp theo <strong>chiều tăng dần điện tích hạt nhân nguyên tử</strong>.
                     </li>
                     <li>
-                      Các nguyên tố có <strong>cùng số lớp electron</strong> trong nguyên tử được xếp thành một hàng (<strong>chu kì</strong>).
+                      Các nguyên tố có <strong>cùng số lớp electron</strong> trong nguyên tử được xếp thành một hàng (<strong>chu kì</strong>)
                     </li>
                     <li>
-                      Các nguyên tố có <strong>cùng số electron hóa trị</strong> trong nguyên tử được xếp thành một cột (<strong>nhóm</strong>).
+                      Các nguyên tố có <strong>cùng số electron hóa trị</strong> trong nguyên tử được xếp thành một cột (<strong>nhóm</strong>)
                     </li>
                   </ul>
                   <div className="p-3.5 rounded-xl bg-amber-50/90 border border-amber-200 text-xs sm:text-sm text-amber-950 leading-relaxed">
-                    <strong>* Electron hóa trị</strong> là các electron có khả năng tham gia cấu tạo thành liên kết hóa học, chúng thường nằm ở <strong>lớp electron ngoài cùng</strong> và <strong>phân lớp sát lớp ngoài cùng</strong>.
+                    <strong>* Electron hóa trị</strong> là các electron có khả năng tham gia cấu tạo thành liên kết hóa học, chúng thường nằm ở <strong>lớp electron ngoài cùng</strong> và <strong>phân lớp sát lớp ngoài cùng</strong>
                   </div>
                 </div>
 
@@ -472,10 +472,10 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                         </h4>
                         <ul className="space-y-1.5 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
                           <li>
-                            Là dãy các nguyên tố mà nguyên tử của chúng có <strong>cùng số lớp electron</strong>, được xếp theo chiều điện tích hạt nhân tăng dần.
+                            Là dãy các nguyên tố mà nguyên tử của chúng có <strong>cùng số lớp electron</strong>, được xếp theo chiều điện tích hạt nhân tăng dần
                           </li>
                           <li>
-                            <strong>Cấu tạo:</strong> gồm <strong>7 chu kì</strong> (hàng ngang):
+                            <strong>Cấu tạo:</strong> gồm <strong>7 chu kì</strong> (hàng ngang)
                             <div className="mt-1 font-mono text-xs sm:text-sm font-bold text-indigo-900">
                               1, 2, 3 → chu kì nhỏ &nbsp;;&nbsp; 4, 5, 6, 7 → chu kì lớn
                             </div>
@@ -498,16 +498,16 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                     </h4>
                     <ul className="space-y-2 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
                       <li>
-                        Là dãy các nguyên tố mà nguyên tử của chúng có <strong>cấu hình electron tương tự nhau</strong>, do đó có <strong>tính chất hóa học gần giống nhau</strong> và được xếp thành một cột.
+                        Là dãy các nguyên tố mà nguyên tử của chúng có <strong>cấu hình electron tương tự nhau</strong>, do đó có <strong>tính chất hóa học gần giống nhau</strong> và được xếp thành một cột
                       </li>
                       <li>
-                        <strong>Cấu tạo:</strong> gồm <strong>8 nhóm A (IA → VIIIA)</strong> và <strong>8 nhóm B (IB → VIIIB)</strong>, riêng <strong>nhóm VIIIB gồm 3 cột</strong>.
+                        <strong>Cấu tạo:</strong> gồm <strong>8 nhóm A (IA → VIIIA)</strong> và <strong>8 nhóm B (IB → VIIIB)</strong>, riêng <strong>nhóm VIIIB gồm 3 cột</strong>
                         <div className="mt-1 text-slate-700 font-medium">
-                          <em>Ví dụ:</em> Nhóm kim loại kiềm – nhóm IA, nhóm Halogen – nhóm VIIA.
+                          <em>Ví dụ:</em> Nhóm kim loại kiềm - nhóm IA, nhóm Halogen - nhóm VIIA
                         </div>
                       </li>
                       <li>
-                        Nguyên tử các nguyên tố trong cùng một nhóm A có <strong>số electron hóa trị bằng nhau</strong> và <strong>bằng số thứ tự của nhóm</strong> (trừ He).
+                        Nguyên tử các nguyên tố trong cùng một nhóm A có <strong>số electron hóa trị bằng nhau</strong> và <strong>bằng số thứ tự của nhóm</strong> (trừ He)
                       </li>
                     </ul>
 
@@ -538,7 +538,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                         <div className="text-xs sm:text-sm font-bold text-slate-800">
                           Xét cấu hình electron có dạng:{' '}
                           <span className="font-mono px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-indigo-800">
-                            ...(n - 1)dᵃ nsᵇ
+                            ...(n - 1)dˣ nsʸ
                           </span>
                         </div>
 
@@ -561,15 +561,15 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                                 </td>
                                 <td className="py-3 px-3 text-slate-800 space-y-1">
                                   <div className="font-mono font-bold text-slate-900">
-                                    ₂₂Ti: 1s²2s²2p⁶3s²3p⁶3d⁴4s² (chuẩn: 3d²4s²)
+                                    ₂₂Ti: 1s²2s²2p⁶3s²3p⁶3d²4s²
                                   </div>
                                   <div>Ta có:</div>
                                   <ul className="list-disc pl-4 space-y-0.5 text-xs">
-                                    <li>Phân lớp 3d có 4 electron (chuẩn Z=22 có 2 electron)</li>
+                                    <li>Phân lớp 3d có 2 electron</li>
                                     <li>Phân lớp 4s có 2 electron</li>
                                   </ul>
                                   <div className="font-mono font-bold text-indigo-700 text-xs">
-                                    → Tổng = 6 → thuộc nhóm VIB, chu kì 4 (Với 3d²4s²: 2 + 2 = 4 → Ti thuộc nhóm IVB, chu kì 4)
+                                    → 2 + 2 = 4 → Ti có nhóm IVB, chu kì 4
                                   </div>
                                 </td>
                               </tr>
@@ -605,7 +605,6 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                                   <div className="font-mono font-bold text-slate-900">
                                     ₂₉Cu: 1s²2s²2p⁶3s²3p⁶3d¹⁰4s¹
                                   </div>
-                                  <div>Ta có:</div>
                                   <ul className="list-disc pl-4 space-y-0.5 text-xs">
                                     <li>Phân lớp 3d có 10 electron</li>
                                     <li>Phân lớp 4s có 1 electron</li>
@@ -623,13 +622,116 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-1">
+                {/* PHẦN II: BÁN KÍNH NGUYÊN TỬ (Hiển thị liền mạch ngay bên dưới Phần I) */}
+                <div className="pt-4 border-t-2 border-slate-200 space-y-5">
+                  <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-700">
+                    <BookOpen className="w-4 h-4" />
+                    <span>II. BÁN KÍNH NGUYÊN TỬ</span>
+                  </div>
+
+                  {/* 1. Khái niệm */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/40 border border-sky-200 space-y-2.5">
+                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
+                      1. Khái niệm
+                    </h3>
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
+                      <li>
+                        Bán kính nguyên tử là một đại lượng đặc trưng cho kích thước của nguyên tử, được xác định gần đúng bằng <strong>một nửa khoảng cách trung bình giữa hai hạt nhân nguyên tử gần nhau nhất</strong> trong chất rắn đơn chất hoặc trong phân tử gồm hai nguyên tử giống nhau
+                      </li>
+                      <li>
+                        Bán kính nguyên tử phụ thuộc vào <strong>lực hút giữa hạt nhân và các electron ở lớp ngoài cùng</strong>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* 2. Quy luật biến đổi */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
+                      2. Quy luật biến đổi
+                    </h3>
+                    <div className="text-xs sm:text-sm font-bold text-slate-800">
+                      - Xu hướng biến đổi bán kính nguyên tử:
+                    </div>
+                    <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
+                      <li>
+                        <strong>Trong một chu kì (từ trái sang phải):</strong> bán kính nguyên tử <strong>giảm</strong> theo chiều tăng dần của điện tích hạt nhân
+                      </li>
+                      <li>
+                        <strong>Trong một nhóm A (từ trên xuống dưới):</strong> bán kính nguyên tử <strong>tăng</strong> theo chiều tăng dần của điện tích hạt nhân
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* 3. Giải thích */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
+                      3. Giải thích
+                    </h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-white border border-indigo-200 space-y-2">
+                        <div className="font-bold text-xs sm:text-sm text-indigo-900">
+                          - Trong cùng 1 chu kì, bán kính nguyên tử giảm vì:
+                        </div>
+                        <ul className="space-y-1.5 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
+                          <li>Số lớp electron không đổi (bằng số chu kì)</li>
+                          <li>
+                            Điện tích hạt nhân lại tăng dẫn đến hút các electron về phía hạt nhân mạnh hơn → <strong>Bán kính nguyên tử GIẢM</strong>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white border border-sky-200 space-y-2">
+                        <div className="font-bold text-xs sm:text-sm text-sky-900">
+                          - Trong cùng 1 nhóm, bán kính nguyên tử tăng vì:
+                        </div>
+                        <ul className="space-y-1.5 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
+                          <li>Số lớp electron tăng dần</li>
+                          <li>
+                            Mặc dù số đơn vị điện tích hạt nhân tăng nhưng khi càng nhiều lớp electron, dẫn đến electron ngoài cùng càng xa hạt nhân, do đó lực hút giảm đi đáng kể → <strong>Bán kính nguyên tử TĂNG</strong>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* *Em có biết: Năng lượng ion hóa thứ nhất */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-300 space-y-2.5">
+                      <h4 className="font-display text-sm sm:text-base font-extrabold text-amber-950">
+                        * Em có biết: Năng lượng ion hóa thứ nhất
+                      </h4>
+                      <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
+                        <li>
+                          Năng lượng ion hóa thứ nhất của nguyên tử là năng lượng tối thiểu cần thiết để tách electron thứ nhất ra khỏi nguyên tử ở thể khí, ở trạng thái cơ bản:{' '}
+                          <strong className="font-mono text-indigo-900">X(g) → X⁺(g) + e</strong>
+                          <div className="mt-1">
+                            <strong>VD:</strong> để tách một electron ra khỏi một mol nguyên tử hydrogen theo quá trình:{' '}
+                            <span className="font-mono font-bold">H(g) → H⁺(g) + e</span> phải tiêu tốn năng lượng là 1312 kJ, do đó{' '}
+                            <strong className="font-mono text-rose-700">I₁ = 1312 kJ/mol</strong>
+                          </div>
+                        </li>
+                        <li>
+                          Năng lượng ion hóa thứ nhất kí hiệu là <strong className="font-mono">I₁</strong>, đơn vị là <strong className="font-mono">kJ/mol</strong>
+                        </li>
+                        <li>
+                          Trong 1 chu kì, bán kính nguyên tử nhìn chung giảm dần, khiến lực hút của hạt nhân lên electron ngoài cùng mạnh hơn → <strong>năng lượng ion hóa thứ nhất tăng dần</strong>
+                          <div className="mt-1 text-amber-950 font-semibold">
+                            Tuy nhiên, vẫn có một số ngoại lệ như <strong>Be - B</strong> và <strong>N - O</strong>
+                          </div>
+                        </li>
+                        <li>
+                          Trong một nhóm A, bán kính nguyên tử nhìn chung tăng dần, khoảng cách từ hạt nhân đến electron ngoài cùng lớn hơn, lực liên kết giảm → <strong>năng lượng ion hóa thứ nhất nhìn chung giảm dần</strong>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => setActiveSubTab('what_is_it')}
-                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    onClick={() => setActiveSubTab('how_it_changes')}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
-                    <span>Tiếp theo: Phần II. Bán kính nguyên tử (1. Khái niệm)</span>
+                    <span>Xem Biểu đồ tương tác &amp; Mô phỏng 3D</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -855,10 +957,10 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                                   : r >= 155
                                   ? 'bg-indigo-700 text-white border border-indigo-500'
                                   : r >= 125
-                                  ? 'bg-indigo-500 text-white border border-indigo-400'
+                                  ? 'bg-indigo-600 text-white border border-indigo-500'
                                   : r >= 95
-                                  ? 'bg-indigo-100 text-slate-900 border border-indigo-200'
-                                  : 'bg-indigo-50 text-slate-800 border border-indigo-200';
+                                  ? 'bg-indigo-100 text-slate-950 border border-indigo-300'
+                                  : 'bg-indigo-50 text-slate-950 border border-indigo-200';
                               return (
                                 <button
                                   key={`${rIdx}-${sym}`}
@@ -868,11 +970,11 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                                   title={`Bấm để xem ${sym} (${r} pm) trên Bảng tuần hoàn`}
                                 >
                                   <span
-                                    className="rounded-full bg-current opacity-35 inline-block"
+                                    className="rounded-full bg-current opacity-40 inline-block"
                                     style={{ width: `${circleDiameter}px`, height: `${circleDiameter}px` }}
                                   />
-                                  <span className="font-display text-xs font-bold leading-none">{sym}</span>
-                                  <span className="font-mono text-[9px] opacity-90 leading-none">{r}</span>
+                                  <span className="font-display text-xs font-extrabold leading-none">{sym}</span>
+                                  <span className="font-mono text-[9px] font-bold leading-none">{r}</span>
                                 </button>
                               );
                             })
@@ -1074,7 +1176,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                           Kiến thức mở rộng SGK Hóa học 10
                         </div>
                         <h3 className="font-display text-lg sm:text-xl font-extrabold text-slate-900">
-                          * Em có biết: Năng lượng ion hóa thứ nhất (I₁)
+                          * Em có biết: Năng lượng ion hóa thứ nhất
                         </h3>
                       </div>
                     </div>
@@ -1093,28 +1195,31 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                           </div>
                         </li>
                         <li>
-                          <strong>VD:</strong> Để tách một electron ra khỏi một mol nguyên tử hydrogen theo quá trình:
+                          <strong>VD:</strong> để tách một electron ra khỏi một mol nguyên tử hydrogen theo quá trình:
                           <div className="my-1.5 px-3.5 py-2 rounded-xl bg-white border border-amber-200 font-mono font-bold text-slate-900">
-                            H(g) → H⁺(g) + e &nbsp;&nbsp;(tiêu tốn năng lượng là 1312 kJ ⇒ <span className="text-rose-700 font-extrabold">I₁ = 1312 kJ/mol</span>)
+                            H(g) → H⁺(g) + e phải tiêu tốn năng lượng là 1312 kJ, do đó <span className="text-rose-700 font-extrabold">I₁ = 1312 kJ/mol</span>
                           </div>
                         </li>
                         <li>
-                          Năng lượng ion hóa thứ nhất kí hiệu là <strong className="font-mono">I₁</strong>, đơn vị là <strong className="font-mono">kJ/mol</strong>.
+                          Năng lượng ion hóa thứ nhất kí hiệu là <strong className="font-mono">I₁</strong>, đơn vị là <strong className="font-mono">kJ/mol</strong>
                         </li>
                       </ul>
                     </div>
 
                     <div className="lg:col-span-5 flex flex-col justify-between gap-3">
-                      <div className="p-3.5 rounded-xl bg-indigo-50/90 border border-indigo-200 space-y-1">
+                      <div className="p-3.5 rounded-xl bg-indigo-50/90 border border-indigo-200 space-y-1.5">
                         <div className="font-extrabold text-indigo-900 flex items-center gap-1.5">
                           <ArrowRight className="w-4 h-4 text-indigo-700 shrink-0" />
                           <span>Xu hướng trong 1 Chu kì (Trái → Phải):</span>
                         </div>
                         <p className="text-xs sm:text-sm text-slate-800">
-                          Trong 1 chu kì, <strong>bán kính nguyên tử giảm dần</strong>, khiến lực hút của hạt nhân lên electron ngoài cùng mạnh hơn →{' '}
+                          Trong 1 chu kì, <strong>bán kính nguyên tử nhìn chung giảm dần</strong>, khiến lực hút của hạt nhân lên electron ngoài cùng mạnh hơn →{' '}
                           <strong className="text-indigo-800 underline underline-offset-4">
-                            năng lượng ion hóa thứ nhất (I₁) tăng dần
-                          </strong>.
+                            năng lượng ion hóa thứ nhất tăng dần
+                          </strong>
+                        </p>
+                        <p className="text-xs text-amber-950 font-semibold bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200">
+                          Tuy nhiên, vẫn có một số ngoại lệ như <strong>Be - B</strong> và <strong>N - O</strong>
                         </p>
                       </div>
 
@@ -1124,10 +1229,10 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                           <span>Xu hướng trong 1 Nhóm A (Trên → Dưới):</span>
                         </div>
                         <p className="text-xs sm:text-sm text-slate-800">
-                          Trong một nhóm A, <strong>bán kính nguyên tử tăng dần</strong>, khoảng cách từ hạt nhân đến electron ngoài cùng lớn hơn, lực liên kết giảm →{' '}
+                          Trong một nhóm A, <strong>bán kính nguyên tử nhìn chung tăng dần</strong>, khoảng cách từ hạt nhân đến electron ngoài cùng lớn hơn, lực liên kết giảm →{' '}
                           <strong className="text-sky-800 underline underline-offset-4">
-                            năng lượng ion hóa thứ nhất (I₁) giảm dần
-                          </strong>.
+                            năng lượng ion hóa thứ nhất nhìn chung giảm dần
+                          </strong>
                         </p>
                       </div>
                     </div>

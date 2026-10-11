@@ -1,6 +1,144 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ELEMENTS, ELEMENT_BY_Z, ChemicalElement } from '../data/elements';
 import { ArrowLeftRight, Scale, CheckCircle2, Atom } from 'lucide-react';
+
+interface MiniCloudParticle {
+  r: number;
+  baseR: number;
+  angle: number;
+  speed: number;
+  size: number;
+  alpha: number;
+  phase: number;
+  isValence: boolean;
+}
+
+const MiniQuantumCloudCanvas: React.FC<{
+  el: ChemicalElement;
+  accentColor: 'sky' | 'indigo';
+}> = ({ el, accentColor }) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const visualRadius = Math.max(26, Math.min(70, Math.round((el.atomicRadius ?? 110) / 3.4)));
+    const particles: MiniCloudParticle[] = [];
+
+    el.shells.forEach((elecCount, sIdx) => {
+      const shellR = ((sIdx + 1) / el.shells.length) * visualRadius;
+      const isValence = sIdx === el.shells.length - 1;
+      // Probability cloud micro-particles
+      const cloudCount = 24 + elecCount * 5;
+      for (let i = 0; i < cloudCount; i++) {
+        const spread = (Math.random() - 0.5) * 9;
+        particles.push({
+          r: Math.max(12, shellR + spread),
+          baseR: shellR,
+          angle: Math.random() * Math.PI * 2,
+          speed: (0.8 + Math.random() * 1.4) * (sIdx % 2 === 0 ? 1 : -1),
+          size: isValence ? 1.5 + Math.random() * 1.1 : 1.0 + Math.random() * 0.7,
+          alpha: isValence ? 0.45 + Math.random() * 0.45 : 0.22 + Math.random() * 0.25,
+          phase: Math.random() * Math.PI * 2,
+          isValence,
+        });
+      }
+    });
+
+    let animId: number;
+    let lastTime = performance.now();
+    let elapsed = 0;
+
+    const render = (now: number) => {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      elapsed += dt;
+
+      const dpr = window.devicePixelRatio || 1;
+      const size = 155;
+      if (canvas.width !== size * dpr || canvas.height !== size * dpr) {
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, size, size);
+
+      const cx = size / 2;
+      const cy = size / 2;
+
+      // Volumetric Electron Cloud probability gradient
+      const grad = ctx.createRadialGradient(cx, cy, 4, cx, cy, visualRadius + 8);
+      if (accentColor === 'sky') {
+        grad.addColorStop(0, 'rgba(2, 132, 199, 0.28)');
+        grad.addColorStop(0.65, 'rgba(56, 189, 248, 0.14)');
+        grad.addColorStop(1, 'rgba(224, 242, 254, 0)');
+      } else {
+        grad.addColorStop(0, 'rgba(79, 70, 229, 0.28)');
+        grad.addColorStop(0.65, 'rgba(129, 140, 248, 0.14)');
+        grad.addColorStop(1, 'rgba(224, 231, 255, 0)');
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, visualRadius + 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Update & draw moving probability cloud particles
+      particles.forEach((p) => {
+        p.angle += p.speed * dt;
+        const radialWave = Math.sin(elapsed * 3.5 + p.phase) * 3.2;
+        const curR = Math.max(11, p.r + radialWave);
+        const x = cx + curR * Math.cos(p.angle);
+        const y = cy + curR * Math.sin(p.angle);
+        const pulse = 0.65 + 0.35 * Math.sin(elapsed * 4 + p.phase);
+
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle =
+          accentColor === 'sky'
+            ? p.isValence
+              ? `rgba(2, 132, 199, ${p.alpha * pulse})`
+              : `rgba(14, 165, 233, ${p.alpha * pulse})`
+            : p.isValence
+            ? `rgba(79, 70, 229, ${p.alpha * pulse})`
+            : `rgba(99, 102, 241, ${p.alpha * pulse})`;
+        ctx.fill();
+      });
+
+      // Nucleus core
+      ctx.beginPath();
+      ctx.arc(cx, cy, 12.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+
+      ctx.font = '700 9.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`+${el.atomicNumber}`, cx, cy);
+
+      ctx.restore();
+      animId = requestAnimationFrame(render);
+    };
+
+    animId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(animId);
+  }, [el, accentColor]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={155}
+      height={155}
+      className="w-[145px] h-[145px] shrink-0 select-none"
+      aria-label={`Đám mây electron của nguyên tố ${el.name}`}
+    />
+  );
+};
 
 interface ElementDualComparisonProps {
   elementA: ChemicalElement;
@@ -77,59 +215,8 @@ export const ElementDualComparison: React.FC<ElementDualComparisonProps> = ({
     return `χ(${stronger.symbol}) = ${stronger.electronegativity?.toFixed(2)} > χ(${weaker.symbol}) = ${weaker.electronegativity?.toFixed(2)} → Nguyên tử ${stronger.symbol} hút cặp electron dùng chung mạnh hơn ${weaker.symbol}.`;
   };
 
-  const renderMiniBohr = (el: ChemicalElement, accentColor: string) => {
-    const visualRadius = Math.max(24, Math.min(72, Math.round((el.atomicRadius ?? 110) / 3.5)));
-    return (
-      <svg width="155" height="155" viewBox="0 0 170 170" className="shrink-0">
-        <circle
-          cx="85"
-          cy="85"
-          r={visualRadius}
-          fill={accentColor === 'sky' ? '#e0f2fe' : '#e0e7ff'}
-          stroke={accentColor === 'sky' ? '#0284c7' : '#4f46e5'}
-          strokeWidth="2"
-        />
-        {el.shells.map((elecCount, sIdx) => {
-          const shellR = ((sIdx + 1) / el.shells.length) * visualRadius;
-          return (
-            <g key={sIdx}>
-              <circle
-                cx="85"
-                cy="85"
-                r={shellR}
-                fill="none"
-                stroke={accentColor === 'sky' ? '#0369a1' : '#3730a3'}
-                strokeOpacity="0.35"
-                strokeDasharray="2 2"
-              />
-              {Array.from({ length: elecCount }).map((_, eIdx) => {
-                const angle = (2 * Math.PI * eIdx) / elecCount - Math.PI / 2;
-                const cx = 85 + shellR * Math.cos(angle);
-                const cy = 85 + shellR * Math.sin(angle);
-                return (
-                  <circle
-                    key={eIdx}
-                    cx={cx}
-                    cy={cy}
-                    r="2.4"
-                    fill={accentColor === 'sky' ? '#0284c7' : '#4f46e5'}
-                  />
-                );
-              })}
-            </g>
-          );
-        })}
-        <circle cx="85" cy="85" r="13" fill="#0f172a" />
-        <text
-          x="85"
-          y="89"
-          textAnchor="middle"
-          className="fill-white font-mono text-[10px] font-bold"
-        >
-          +{el.atomicNumber}
-        </text>
-      </svg>
-    );
+  const renderMiniBohr = (el: ChemicalElement, accentColor: 'sky' | 'indigo') => {
+    return <MiniQuantumCloudCanvas el={el} accentColor={accentColor} />;
   };
 
   return (

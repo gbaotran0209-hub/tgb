@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import { ElementDualComparison } from './ElementDualComparison';
 import { Atom3DCanvas } from './Atom3DCanvas';
+import {
+  FlameAndSpectrumLab,
+  getElementSpectrumProfile,
+} from './FlameAndSpectrumLab';
 
 interface PeriodicTableSectionProps {
   selectedElement: ChemicalElement | null;
@@ -100,6 +104,10 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
   const [compareElementA, setCompareElementA] = useState<ChemicalElement>(ELEMENT_BY_Z[11]); // Na
   const [compareElementB, setCompareElementB] = useState<ChemicalElement>(ELEMENT_BY_Z[17]); // Cl
   const [isCompactMobileTable, setIsCompactMobileTable] = useState<boolean>(false);
+
+  useEffect(() => {
+    setColorMode(initialColorMode);
+  }, [initialColorMode]);
 
   const mainGridMap = useMemo(() => {
     const map = new Map<string, ChemicalElement>();
@@ -332,15 +340,15 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         <div className="flex items-center justify-between w-full leading-none">
           <span
             className={`font-mono text-[9px] sm:text-[10px] font-extrabold tabular-nums ${
-              isDarkCell ? 'text-slate-200' : 'text-slate-800'
+              isDarkCell ? 'text-white' : 'text-slate-900'
             }`}
           >
             {el.atomicNumber}
           </span>
           {colorMode === 'radius_heatmap' ? (
             <span
-              className={`font-mono text-[8px] sm:text-[9px] tabular-nums ${
-                isDarkCell ? 'text-indigo-100' : 'text-indigo-800 font-semibold'
+              className={`font-mono text-[8px] sm:text-[9px] font-bold tabular-nums ${
+                isDarkCell ? 'text-indigo-100' : 'text-indigo-900'
               }`}
             >
               {el.atomicRadius ? `${el.atomicRadius}` : '—'}
@@ -350,21 +358,21 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
               className={`text-[8px] font-mono font-extrabold px-1 rounded ${
                 isDarkMode
                   ? 'bg-slate-950/90 text-sky-300 border border-sky-400/40'
-                  : 'bg-white/85 text-slate-950'
+                  : 'bg-white/90 text-slate-950'
               }`}
             >
               {el.block}
             </span>
           ) : (
             <span
-              className={`text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-tighter ${
+              className={`text-[7px] sm:text-[8px] font-mono font-extrabold uppercase tracking-tighter ${
                 isDarkMode
-                  ? 'text-slate-300'
+                  ? 'text-slate-200'
                   : el.category === 'metal'
-                  ? 'text-sky-900/80'
+                  ? 'text-sky-950'
                   : el.category === 'nonmetal'
-                  ? 'text-rose-900/80'
-                  : 'text-amber-900/80'
+                  ? 'text-rose-950'
+                  : 'text-amber-950'
               }`}
             >
               {el.groupRoman}
@@ -399,15 +407,15 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         <div className="w-full overflow-hidden">
           <div
             className={`text-[8px] sm:text-[9px] font-bold truncate leading-tight ${
-              isDarkCell ? 'text-white' : 'text-slate-900'
+              isDarkCell ? 'text-white' : 'text-slate-950'
             }`}
           >
             {el.vietnameseName}
           </div>
           {!isCompactMobileTable && (
             <div
-              className={`hidden sm:block font-mono text-[8px] truncate leading-tight mt-0.5 ${
-                isDarkCell ? 'text-slate-300' : 'text-slate-700/90'
+              className={`hidden sm:block font-mono text-[8px] font-medium truncate leading-tight mt-0.5 ${
+                isDarkCell ? 'text-slate-200' : 'text-slate-800'
               }`}
             >
               {el.electronConfig}
@@ -430,62 +438,108 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
     <div className="space-y-5 sm:space-y-6">
       {/* 1. Control Bar: Quick Spotlight + Color Mode + Filter + Search + SGK Legend */}
       <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-4 shadow-xs">
-        {/* Quick Spotlight Famous Elements */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs font-bold text-slate-700 mr-1 inline-flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Bấm chọn nhanh nguyên tố:</span>
+        {/* Quick Spotlight Famous Elements & Flame Test Showcase */}
+        <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-700 mr-1 inline-flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Bấm chọn nhanh nguyên tố:</span>
+              </span>
+              {QUICK_SPOTLIGHT_Z.map((z) => {
+                const el = ELEMENT_BY_Z[z];
+                const active = selectedElement?.atomicNumber === z;
+                return (
+                  <button
+                    key={z}
+                    type="button"
+                    onClick={() => handleElementClick(el)}
+                    className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer ${
+                      active
+                        ? 'bg-slate-900 text-white shadow-xs scale-105'
+                        : el.category === 'metal'
+                        ? 'bg-sky-100/80 text-sky-900 hover:bg-sky-200'
+                        : 'bg-pink-100/80 text-rose-900 hover:bg-pink-200'
+                    }`}
+                  >
+                    {el.symbol} ({el.vietnameseName})
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              {onNavigateTab && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('radius')}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
+                >
+                  <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                  <span>Nội dung Lý thuyết trọng tâm (Mục 2)</span>
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDualCompare(true);
+                  setTimeout(() => {
+                    const cmpEl = document.getElementById('dual-element-comparison');
+                    if (cmpEl) cmpEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 50);
+                }}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
+              >
+                <Scale className="w-3.5 h-3.5 shrink-0" />
+                <span>So sánh ({compareElementA.symbol} vs {compareElementB.symbol})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Flame Test & Emission Spectrum Presets */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-xs font-bold text-rose-700 mr-1 inline-flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+              <span>Thí nghiệm Màu ngọn lửa & Quang phổ:</span>
             </span>
-            {QUICK_SPOTLIGHT_Z.map((z) => {
+            {[
+              { z: 3, tag: 'Đỏ thẫm' },
+              { z: 11, tag: 'Vàng rực' },
+              { z: 19, tag: 'Tím hồng' },
+              { z: 29, tag: 'Xanh lục bảo' },
+              { z: 20, tag: 'Đỏ cam' },
+              { z: 38, tag: 'Đỏ tươi' },
+              { z: 56, tag: 'Lục vàng' },
+              { z: 55, tag: 'Xanh tím' },
+            ].map(({ z, tag }) => {
               const el = ELEMENT_BY_Z[z];
+              const prof = getElementSpectrumProfile(el);
               const active = selectedElement?.atomicNumber === z;
               return (
                 <button
                   key={z}
                   type="button"
                   onClick={() => handleElementClick(el)}
-                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 border ${
                     active
-                      ? 'bg-slate-900 text-white shadow-xs scale-105'
-                      : el.category === 'metal'
-                      ? 'bg-sky-100/80 text-sky-900 hover:bg-sky-200'
-                      : 'bg-pink-100/80 text-rose-900 hover:bg-pink-200'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs scale-105'
+                      : 'bg-slate-900/95 hover:bg-slate-800 text-white border-slate-700'
                   }`}
                 >
-                  {el.symbol} ({el.vietnameseName})
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: prof.primaryHex,
+                      boxShadow: `0 0 8px ${prof.primaryHex}`,
+                    }}
+                  />
+                  <span className="font-mono font-extrabold">{el.symbol}</span>
+                  <span className="text-slate-300 font-medium">({tag})</span>
                 </button>
               );
             })}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {onNavigateTab && (
-              <button
-                type="button"
-                onClick={() => onNavigateTab('radius')}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
-              >
-                <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                <span>Nội dung Lý thuyết trọng tâm (Mục 2)</span>
-                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowDualCompare(true);
-                setTimeout(() => {
-                  const cmpEl = document.getElementById('dual-element-comparison');
-                  if (cmpEl) cmpEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 50);
-              }}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
-            >
-              <Scale className="w-3.5 h-3.5 shrink-0" />
-              <span>So sánh ({compareElementA.symbol} vs {compareElementB.symbol})</span>
-            </button>
           </div>
         </div>
 
@@ -801,7 +855,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                     exit={{ opacity: 0, scale: 0.94, y: 16 }}
                     transition={{ type: 'spring', stiffness: 340, damping: 28 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="relative w-full max-w-[1220px] max-h-[92dvh] overflow-y-auto bg-white border-2 border-sky-400/85 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl my-auto"
+                    className="relative w-full max-w-[1220px] max-h-[92dvh] overflow-y-auto overflow-x-hidden bg-white border-2 border-sky-400/85 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl my-auto"
                   >
               {/* Decorative Ambient SGK Color Glow in Top-Left Corner */}
               <div
@@ -1057,6 +1111,14 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                     {/* Right 5 Cols: Interactive 3D Canvas Atom Model */}
                     <Atom3DCanvas element={selectedElement} />
                   </div>
+
+                  {/* Interactive Flame Test & Atomic Emission Spectrum Lab */}
+                  <div className="relative z-10">
+                    <FlameAndSpectrumLab
+                      element={selectedElement}
+                      onSelectElement={(el) => onSelectElement(el)}
+                    />
+                  </div>
                 </motion.div>
               </motion.div>
               </div>
@@ -1136,7 +1198,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 </div>
               ) : (
                 <div className="text-slate-200">
-                  👉 <strong>Bấm vào bất kì ô nguyên tố nào bên dưới</strong> để mở Bảng phân tích vị trí (Ô, Chu kì, Nhóm) & Mô hình nguyên tử 3D hiện đại.
+                  👉 <strong>Bấm vào bất kì ô nguyên tố nào bên dưới</strong> để mở Bảng phân tích vị trí (Ô, Chu kì, Nhóm), Mô hình nguyên tử 3D/Bohr & Thí nghiệm Màu ngọn lửa – Quang phổ phát xạ!
                 </div>
               )}
               <span className="font-mono text-[11px] text-sky-300 font-bold shrink-0">

@@ -45,6 +45,7 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .bg-white,
 .dark-theme .bg-white\/95,
 .dark-theme .bg-white\/90,
+.dark-theme .bg-white\/85,
 .dark-theme .bg-white\/80,
 .dark-theme .bg-white\/70,
 .dark-theme .bg-white\/60 {
@@ -61,7 +62,7 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .bg-slate-50\/40,
 .dark-theme .hover\:bg-slate-50:hover,
 .dark-theme .hover\:bg-white:hover {
-  background-color: #131c31 !important;
+  background-color: #152038 !important;
 }
 
 .dark-theme .bg-slate-100,
@@ -78,7 +79,7 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .bg-slate-200\/70,
 .dark-theme .hover\:bg-slate-200:hover {
   background-color: #334155 !important;
-  color: #f8fafc !important;
+  color: #ffffff !important;
 }
 
 /* Active white segmented tab buttons inside dark-theme containers */
@@ -93,9 +94,15 @@ h1, h2, h3, h4, .font-display {
   color: #ffffff !important;
 }
 
-/* Solid bg-slate-900 buttons/headers in Dark Mode so they don't blend into #0f172a cards */
+/* Solid & Gradient bg-slate-900 buttons/headers in Dark Mode so they never sink into #0f172a cards */
 .dark-theme button.bg-slate-900:not([class*="from-"]) {
   background-color: #0284c7 !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+.dark-theme button[class*="from-slate-900"] {
+  background-image: linear-gradient(135deg, #0369a1 0%, #1d4ed8 55%, #312e81 100%) !important;
   border-color: #38bdf8 !important;
   color: #ffffff !important;
 }
@@ -103,6 +110,12 @@ h1, h2, h3, h4, .font-display {
 .dark-theme div.bg-slate-900:not([class*="from-"]) {
   background-color: #1e293b !important;
   border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
+
+.dark-theme div[class*="from-slate-900"] {
+  background-image: linear-gradient(135deg, #172554 0%, #1e1b4b 55%, #0f172a 100%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
   color: #ffffff !important;
 }
 
@@ -115,80 +128,90 @@ h1, h2, h3, h4, .font-display {
 .dark-theme [class*="from-amber-50"],
 .dark-theme [class*="from-emerald-50"],
 .dark-theme [class*="from-emerald-100"] {
-  --tw-gradient-from: #131f38 !important;
+  --tw-gradient-from: #15223d !important;
   --tw-gradient-via: #0f172a !important;
-  --tw-gradient-to: #172542 !important;
-  background-image: linear-gradient(to bottom right, #131f38, #0f172a, #172542) !important;
+  --tw-gradient-to: #192a4a !important;
+  background-image: linear-gradient(to bottom right, #15223d, #0f172a, #192a4a) !important;
 }
 
 /* 3. All Light Pastel Tinted Backgrounds & Hover States -> Dark Translucent Surfaces */
 .dark-theme [class*="bg-sky-50"],
 .dark-theme [class*="bg-sky-100"],
+.dark-theme [class*="bg-sky-200"],
 .dark-theme .bg-\[\#e0f2fe\]\/85,
 .dark-theme .bg-\[\#bae6fd\] {
-  background-color: rgba(12, 74, 110, 0.55) !important;
-  border-color: rgba(56, 189, 248, 0.48) !important;
+  background-color: rgba(12, 74, 110, 0.65) !important;
+  border-color: rgba(56, 189, 248, 0.55) !important;
 }
 
 .dark-theme .hover\:bg-sky-50\/70:hover,
 .dark-theme .hover\:bg-sky-50\/60:hover,
 .dark-theme .hover\:bg-sky-100:hover,
 .dark-theme .hover\:bg-sky-200:hover,
+.dark-theme .group:hover .group-hover\:bg-sky-200,
 .dark-theme .hover\:bg-\[\#bae6fd\]\/70:hover {
-  background-color: rgba(14, 116, 144, 0.72) !important;
+  background-color: rgba(14, 116, 144, 0.82) !important;
 }
 
 .dark-theme [class*="bg-indigo-50"],
-.dark-theme [class*="bg-indigo-100"] {
-  background-color: rgba(49, 46, 129, 0.55) !important;
-  border-color: rgba(129, 140, 248, 0.48) !important;
+.dark-theme [class*="bg-indigo-100"],
+.dark-theme [class*="bg-indigo-200"] {
+  background-color: rgba(49, 46, 129, 0.65) !important;
+  border-color: rgba(129, 140, 248, 0.55) !important;
 }
 
 .dark-theme .hover\:bg-indigo-100:hover {
-  background-color: rgba(67, 56, 202, 0.72) !important;
+  background-color: rgba(67, 56, 202, 0.82) !important;
 }
 
 .dark-theme [class*="bg-rose-50"],
 .dark-theme [class*="bg-rose-100"],
+.dark-theme [class*="bg-rose-200"],
 .dark-theme [class*="bg-pink-50"],
 .dark-theme [class*="bg-pink-100"],
+.dark-theme [class*="bg-pink-200"],
 .dark-theme .bg-\[\#fce7f3\]\/90,
 .dark-theme .bg-\[\#fbcfe8\] {
-  background-color: rgba(131, 24, 67, 0.52) !important;
-  border-color: rgba(244, 114, 182, 0.48) !important;
+  background-color: rgba(131, 24, 67, 0.62) !important;
+  border-color: rgba(244, 114, 182, 0.55) !important;
 }
 
 .dark-theme .hover\:bg-pink-50\/70:hover,
 .dark-theme .hover\:bg-pink-200:hover,
+.dark-theme .group:hover .group-hover\:bg-pink-200,
 .dark-theme .hover\:bg-\[\#fbcfe8\]\/75:hover {
-  background-color: rgba(157, 23, 77, 0.72) !important;
+  background-color: rgba(157, 23, 77, 0.82) !important;
 }
 
 .dark-theme [class*="bg-red-50"],
 .dark-theme [class*="bg-red-100"],
+.dark-theme [class*="bg-red-200"],
 .dark-theme .hover\:bg-red-50:hover {
-  background-color: rgba(127, 29, 29, 0.55) !important;
-  border-color: rgba(248, 113, 113, 0.52) !important;
+  background-color: rgba(127, 29, 29, 0.65) !important;
+  border-color: rgba(248, 113, 113, 0.6) !important;
 }
 
 .dark-theme [class*="bg-amber-50"],
 .dark-theme [class*="bg-amber-100"],
+.dark-theme [class*="bg-amber-200"],
 .dark-theme .bg-\[\#fef3c7\]\/90,
 .dark-theme .bg-\[\#fde68a\] {
-  background-color: rgba(120, 53, 15, 0.55) !important;
-  border-color: rgba(251, 191, 36, 0.48) !important;
+  background-color: rgba(120, 53, 15, 0.65) !important;
+  border-color: rgba(251, 191, 36, 0.55) !important;
 }
 
 .dark-theme .hover\:bg-amber-50\/70:hover,
 .dark-theme .hover\:bg-amber-200:hover,
+.dark-theme .group:hover .group-hover\:bg-amber-200,
 .dark-theme .hover\:bg-\[\#fde68a\]\/80:hover {
-  background-color: rgba(146, 64, 14, 0.72) !important;
+  background-color: rgba(146, 64, 14, 0.82) !important;
 }
 
 .dark-theme [class*="bg-emerald-50"],
-.dark-theme [class*="bg-emerald-100"] {
-  background-color: rgba(6, 78, 59, 0.55) !important;
-  border-color: rgba(52, 211, 153, 0.48) !important;
+.dark-theme [class*="bg-emerald-100"],
+.dark-theme [class*="bg-emerald-200"] {
+  background-color: rgba(6, 78, 59, 0.65) !important;
+  border-color: rgba(52, 211, 153, 0.55) !important;
 }
 
 /* 4. Borders & Dividers in Dark Mode */
@@ -220,23 +243,23 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .text-slate-950,
 .dark-theme .text-slate-900,
 .dark-theme .hover\:text-slate-900:hover {
-  color: #f8fafc !important;
+  color: #ffffff !important;
 }
 
 .dark-theme .text-slate-800,
 .dark-theme .text-slate-700,
 .dark-theme .text-slate-700\/90,
 .dark-theme .hover\:text-slate-800:hover {
-  color: #e2e8f0 !important;
+  color: #f1f5f9 !important;
 }
 
 .dark-theme .text-slate-600,
 .dark-theme .text-slate-500 {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 .dark-theme .text-slate-400 {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
 }
 
 .dark-theme .text-sky-950,
@@ -288,7 +311,7 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .text-amber-800,
 .dark-theme .text-amber-700,
 .dark-theme .text-amber-600 {
-  color: #fcd34d !important;
+  color: #fde047 !important;
 }
 
 .dark-theme .text-emerald-950,
@@ -303,6 +326,7 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .bg-sky-400,
 .dark-theme .bg-sky-500,
 .dark-theme .bg-pink-400,
+.dark-theme .bg-amber-300,
 .dark-theme .bg-amber-400,
 .dark-theme .bg-amber-500.text-slate-950,
 .dark-theme .bg-emerald-400,
@@ -313,7 +337,12 @@ h1, h2, h3, h4, .font-display {
 .dark-theme .bg-pink-400.text-slate-950,
 .dark-theme .bg-amber-400.text-slate-950,
 .dark-theme .bg-indigo-300.text-slate-950,
-.dark-theme .bg-indigo-400.text-slate-950 {
+.dark-theme .bg-indigo-400.text-slate-950,
+.dark-theme .bg-sky-400 *,
+.dark-theme .bg-sky-500.text-slate-950 *,
+.dark-theme .bg-pink-400 *,
+.dark-theme .bg-amber-400 *,
+.dark-theme .bg-amber-500.text-slate-950 * {
   color: #020617 !important;
 }
 
@@ -322,12 +351,12 @@ h1, h2, h3, h4, .font-display {
 .dark-theme select,
 .dark-theme textarea {
   background-color: #0f172a !important;
-  color: #f8fafc !important;
-  border-color: #334155 !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
 }
 
 .dark-theme input::placeholder {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 
 /* Shimmering glass reflection sweep on element tiles */

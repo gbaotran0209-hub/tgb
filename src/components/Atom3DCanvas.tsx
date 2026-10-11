@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ChemicalElement } from '../data/elements';
-import { Play, Pause, RotateCcw, Sparkles, Compass, Orbit } from 'lucide-react';
+import { Play, Pause, RotateCcw, Sparkles, Compass, Orbit, Flame } from 'lucide-react';
 
 interface Atom3DCanvasProps {
   element: ChemicalElement;
@@ -13,20 +13,31 @@ interface NucleonPoint {
   y: number;
   z: number;
   isProton: boolean;
+  phase: number;
 }
 
-interface CloudSamplePoint {
+interface DynamicCloudParticle {
   x: number;
   y: number;
   z: number;
+  vx: number;
+  vy: number;
+  vz: number;
   shellIdx: number;
+  shellR: number;
+  isOuter: boolean;
   orbitalType: 's' | 'px' | 'py' | 'pz' | 'd';
   baseAlpha: number;
+  size: number;
   phase: number;
+  pulseSpeed: number;
+  life: number;
+  maxLife: number;
 }
 
 interface QuantumElectronState {
   shellIdx: number;
+  shellR: number;
   isOuter: boolean;
   orbitalType: 's' | 'px' | 'py' | 'pz' | 'd';
   x: number;
@@ -35,16 +46,22 @@ interface QuantumElectronState {
   vx: number;
   vy: number;
   vz: number;
+  targetX: number;
+  targetY: number;
+  targetZ: number;
   history: { x: number; y: number; z: number }[];
-  jumpTimer: number;
+  retargetTimer: number;
+  flashAlpha: number;
 }
 
 type ModelMode = 'modern_cloud' | 'modern_ao' | 'bohr_compare';
+type CloudDensityPreset = 'normal' | 'high';
 
 export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [modelMode, setModelMode] = useState<ModelMode>('modern_cloud');
+  const [cloudDensity, setCloudDensity] = useState<CloudDensityPreset>('high');
   const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
   const [highlightedShell, setHoveredShell] = useState<number | null>(null);
 
@@ -59,24 +76,25 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
 
   // 3D Nucleus cluster points
   const nucleonsRef = useRef<NucleonPoint[]>([]);
-  // 3D Electron Cloud probability density samples
-  const cloudPointsRef = useRef<CloudSamplePoint[]>([]);
-  // Stochastic Quantum Electrons (moving without fixed orbits)
+  // Dynamic 3D Electron Cloud probability density swarm particles
+  const cloudParticlesRef = useRef<DynamicCloudParticle[]>([]);
+  // High-energy Quantum Electrons with wave-packet trails (moving without fixed orbits)
   const quantumElectronsRef = useRef<QuantumElectronState[]>([]);
 
-  // Sample a 3D point inside an s-orbital (spherical) or p-orbital (figure-8 dumbbell along x/y/z)
+  // Sample a 3D point inside an s-orbital (spherical), p-orbital (figure-8 dumbbell), or d-orbital (cloverleaf)
+  // representing the quantum probability density |ψ(r, θ, φ)|²
   const sampleOrbitalPosition = (
     shellR: number,
     orbitalType: 's' | 'px' | 'py' | 'pz' | 'd'
   ): { x: number; y: number; z: number } => {
-    // Gaussian-like radial spread around shellR (representing ~90% probability density region)
+    // Box-Muller Gaussian radial spread around shellR (90% probability density shell)
     const u1 = Math.max(0.0001, Math.random());
     const u2 = Math.random();
     const normalRand = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
 
     if (orbitalType === 's') {
-      // Spherical cloud (hình cầu)
-      const r = Math.max(12, shellR * (0.78 + normalRand * 0.16));
+      // Spherical wave-function cloud (AO s hình cầu)
+      const r = Math.max(11, shellR * (0.82 + normalRand * 0.18));
       const cosTheta = 2 * Math.random() - 1;
       const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta * cosTheta));
       const phi = Math.random() * 2 * Math.PI;
@@ -88,36 +106,35 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
     }
 
     if (orbitalType === 'px' || orbitalType === 'py' || orbitalType === 'pz') {
-      // Figure-8 dumbbell lobe (hình số 8 nổi theo trục X, Y hoặc Z)
+      // Figure-8 dumbbell lobe (AO p hình số 8 nổi theo trục X, Y hoặc Z)
       const sign = Math.random() < 0.5 ? 1 : -1;
-      // Bias cosTheta toward 1 for dumbbell lobes (cos^2 theta angular probability)
-      const lobeAngle = (Math.random() - 0.5) * 0.85;
+      // Angular distribution weighted by cos²(θ)
+      const lobeAngle = (Math.random() - 0.5) * 0.82;
       const phi = Math.random() * 2 * Math.PI;
-      const dist = Math.max(10, shellR * (0.62 + Math.random() * 0.48));
+      const dist = Math.max(10, shellR * (0.58 + Math.random() * 0.52));
       const axial = sign * dist * Math.cos(lobeAngle);
-      const perp1 = dist * Math.sin(lobeAngle) * Math.cos(phi) * 0.52;
-      const perp2 = dist * Math.sin(lobeAngle) * Math.sin(phi) * 0.52;
+      const perp1 = dist * Math.sin(lobeAngle) * Math.cos(phi) * 0.48;
+      const perp2 = dist * Math.sin(lobeAngle) * Math.sin(phi) * 0.48;
 
       if (orbitalType === 'px') return { x: axial, y: perp1, z: perp2 };
       if (orbitalType === 'py') return { x: perp1, y: axial, z: perp2 };
       return { x: perp1, y: perp2, z: axial };
     }
 
-    // d/f cloverleaf 3D distribution
-    const r = Math.max(14, shellR * (0.75 + normalRand * 0.15));
-    const cosTheta = 2 * Math.random() - 1;
-    const sinTheta = Math.sqrt(Math.max(0, 1 - cosTheta * cosTheta));
-    const phi = Math.random() * 2 * Math.PI;
+    // d/f 4-lobe cloverleaf probability distribution
+    const r = Math.max(13, shellR * (0.78 + normalRand * 0.16));
+    const quadAngle = (Math.floor(Math.random() * 4) * Math.PI) / 2 + (Math.random() - 0.5) * 0.55;
+    const zSpread = (Math.random() - 0.5) * shellR * 0.45;
     return {
-      x: r * sinTheta * Math.cos(phi),
-      y: r * sinTheta * Math.sin(phi),
-      z: r * cosTheta,
+      x: r * Math.cos(quadAngle),
+      y: r * Math.sin(quadAngle),
+      z: zSpread,
     };
   };
 
   useEffect(() => {
-    // 1. Build 3D Nucleus
-    const count = Math.min(34, Math.max(6, element.atomicNumber * 2));
+    // 1. Build 3D Nucleus with subtle thermal/quantum vibration phase
+    const count = Math.min(36, Math.max(6, element.atomicNumber * 2));
     const points: NucleonPoint[] = [];
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     for (let i = 0; i < count; i++) {
@@ -130,25 +147,26 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
         y: y * rScale * 0.75,
         z: Math.sin(theta) * radiusAtY * rScale * 0.75,
         isProton: i % 2 === 0,
+        phase: Math.random() * Math.PI * 2,
       });
     }
     nucleonsRef.current = points;
 
-    // 2. Build 3D Electron Cloud probability density particles & non-orbital quantum electrons
+    // 2. Build Dynamic 3D Electron Cloud Particle Swarm & Quantum Electrons
     const shells = element.shells;
     const maxShells = Math.max(shells.length, 1);
-    const minRadius = 32;
+    const minRadius = 30;
     const maxRadius = 92;
     const radiusStep = maxShells > 1 ? (maxRadius - minRadius) / (maxShells - 1) : 0;
 
-    const cloudSamples: CloudSamplePoint[] = [];
+    const cloudSwarm: DynamicCloudParticle[] = [];
     const qElectrons: QuantumElectronState[] = [];
+    const densityFactor = cloudDensity === 'high' ? 1.45 : 1.0;
 
     shells.forEach((elecCount, sIdx) => {
       const shellR = maxShells === 1 ? 58 : minRadius + sIdx * radiusStep;
       const isOuter = sIdx === shells.length - 1;
 
-      // Determine orbital types present in this shell (first 2 electrons in s, next up to 6 in px, py, pz)
       const getOrbitalForIndex = (idx: number): 's' | 'px' | 'py' | 'pz' | 'd' => {
         if (sIdx === 0 || idx < 2) return 's';
         if (idx < 8) {
@@ -158,45 +176,62 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
         return 'd';
       };
 
-      // Generate probability cloud dots for this shell
-      const dotsForShell = Math.min(140, 42 + elecCount * 8);
-      for (let d = 0; d < dotsForShell; d++) {
+      // Generate moving probability cloud micro-particles for this shell
+      const baseDots = Math.min(200, Math.round((56 + elecCount * 10) * densityFactor));
+      for (let d = 0; d < baseDots; d++) {
         const orb = getOrbitalForIndex(d % Math.max(1, elecCount));
         const pos = sampleOrbitalPosition(shellR, orb);
-        cloudSamples.push({
+        // Tangential swirl velocity + radial quantum fluctuation
+        const speed = 14 + Math.random() * 26;
+        cloudSwarm.push({
           x: pos.x,
           y: pos.y,
           z: pos.z,
+          vx: (Math.random() - 0.5) * speed,
+          vy: (Math.random() - 0.5) * speed,
+          vz: (Math.random() - 0.5) * speed,
           shellIdx: sIdx,
+          shellR,
+          isOuter,
           orbitalType: orb,
-          baseAlpha: isOuter ? 0.35 + Math.random() * 0.35 : 0.18 + Math.random() * 0.22,
+          baseAlpha: isOuter ? 0.42 + Math.random() * 0.42 : 0.22 + Math.random() * 0.26,
+          size: isOuter ? 1.3 + Math.random() * 1.2 : 0.9 + Math.random() * 0.8,
           phase: Math.random() * Math.PI * 2,
+          pulseSpeed: 2.5 + Math.random() * 3.5,
+          life: Math.random() * 1.8,
+          maxLife: 1.4 + Math.random() * 1.8,
         });
       }
 
-      // Generate actual stochastic electrons for this shell (no fixed tracks!)
+      // Generate primary quantum electrons moving continuously through the probability cloud
       for (let eIdx = 0; eIdx < elecCount; eIdx++) {
         const orb = getOrbitalForIndex(eIdx);
         const startPos = sampleOrbitalPosition(shellR, orb);
+        const targetPos = sampleOrbitalPosition(shellR, orb);
         qElectrons.push({
           shellIdx: sIdx,
+          shellR,
           isOuter,
           orbitalType: orb,
           x: startPos.x,
           y: startPos.y,
           z: startPos.z,
-          vx: (Math.random() - 0.5) * 160,
-          vy: (Math.random() - 0.5) * 160,
-          vz: (Math.random() - 0.5) * 160,
+          vx: (Math.random() - 0.5) * 90,
+          vy: (Math.random() - 0.5) * 90,
+          vz: (Math.random() - 0.5) * 90,
+          targetX: targetPos.x,
+          targetY: targetPos.y,
+          targetZ: targetPos.z,
           history: [{ x: startPos.x, y: startPos.y, z: startPos.z }],
-          jumpTimer: Math.random() * 0.15,
+          retargetTimer: 0.08 + Math.random() * 0.14,
+          flashAlpha: 0,
         });
       }
     });
 
-    cloudPointsRef.current = cloudSamples;
+    cloudParticlesRef.current = cloudSwarm;
     quantumElectronsRef.current = qElectrons;
-  }, [element]);
+  }, [element, cloudDensity]);
 
   const handleResetCamera = () => {
     rotationRef.current = { rotX: 0.42, rotY: -0.45 };
@@ -241,7 +276,7 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
       if (isPlaying) {
         timeRef.current += dt * speedMultiplier;
         if (!isDraggingRef.current) {
-          rotationRef.current.rotY += dt * 0.22 * speedMultiplier;
+          rotationRef.current.rotY += dt * 0.24 * speedMultiplier;
         }
       }
 
@@ -266,21 +301,21 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
 
       const shells = element.shells;
       const maxShells = Math.max(shells.length, 1);
-      const minRadius = 32;
+      const minRadius = 30;
       const maxRadius = 92;
       const radiusStep = maxShells > 1 ? (maxRadius - minRadius) / (maxShells - 1) : 0;
 
-      // Ambient quantum probability glow around nucleus
-      const outerR = maxShells === 1 ? 65 : maxRadius + 14;
-      const bgGlow = ctx.createRadialGradient(cx, cy, 4, cx, cy, outerR);
+      // 1. Volumetric Radial Probability Density Halo (No static hard circle lines in cloud mode!)
+      const outerR = maxShells === 1 ? 68 : maxRadius + 18;
+      const bgGlow = ctx.createRadialGradient(cx, cy, 3, cx, cy, outerR);
       if (modelMode === 'modern_cloud') {
-        bgGlow.addColorStop(0, 'rgba(56, 189, 248, 0.34)');
-        bgGlow.addColorStop(0.45, 'rgba(56, 189, 248, 0.14)');
-        bgGlow.addColorStop(0.8, 'rgba(99, 102, 241, 0.06)');
+        bgGlow.addColorStop(0, 'rgba(56, 189, 248, 0.38)');
+        bgGlow.addColorStop(0.35, 'rgba(56, 189, 248, 0.16)');
+        bgGlow.addColorStop(0.7, 'rgba(99, 102, 241, 0.08)');
         bgGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
       } else if (modelMode === 'modern_ao') {
-        bgGlow.addColorStop(0, 'rgba(168, 85, 247, 0.28)');
-        bgGlow.addColorStop(0.5, 'rgba(56, 189, 248, 0.12)');
+        bgGlow.addColorStop(0, 'rgba(168, 85, 247, 0.32)');
+        bgGlow.addColorStop(0.45, 'rgba(56, 189, 248, 0.14)');
         bgGlow.addColorStop(1, 'rgba(15, 23, 42, 0)');
       } else {
         bgGlow.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
@@ -289,13 +324,31 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
       ctx.fillStyle = bgGlow;
       ctx.fillRect(0, 0, width, height);
 
-      // Draw 3D Cartesian axes (X, Y, Z) in Modern Cloud & AO modes to emphasize 3D space
+      // Soft volumetric shell probability bands when hovering a specific shell
+      if (modelMode !== 'bohr_compare' && highlightedShell !== null) {
+        const targetR = maxShells === 1 ? 58 : minRadius + highlightedShell * radiusStep;
+        const bandGrad = ctx.createRadialGradient(
+          cx,
+          cy,
+          Math.max(4, targetR - 14),
+          cx,
+          cy,
+          targetR + 14
+        );
+        bandGrad.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        bandGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.22)');
+        bandGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+        ctx.fillStyle = bandGrad;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      // Draw 3D Cartesian axes (X, Y, Z) in Modern Cloud & AO modes to anchor 3D perception
       if (modelMode === 'modern_cloud' || modelMode === 'modern_ao') {
         const axisLen = 104;
         const axes = [
-          { x: axisLen, y: 0, z: 0, label: 'x', color: 'rgba(248, 113, 113, 0.45)' },
-          { x: 0, y: -axisLen, z: 0, label: 'z', color: 'rgba(56, 189, 248, 0.45)' },
-          { x: 0, y: 0, z: axisLen, label: 'y', color: 'rgba(52, 211, 153, 0.45)' },
+          { x: axisLen, y: 0, z: 0, label: 'x', color: 'rgba(248, 113, 113, 0.42)' },
+          { x: 0, y: -axisLen, z: 0, label: 'z', color: 'rgba(56, 189, 248, 0.42)' },
+          { x: 0, y: 0, z: axisLen, label: 'y', color: 'rgba(52, 211, 153, 0.42)' },
         ];
         axes.forEach((ax) => {
           const pPos = rotate3D(ax.x, ax.y, ax.z, camRx, camRy, 0);
@@ -313,82 +366,46 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
           ctx.setLineDash([]);
 
           ctx.font = '700 9px "JetBrains Mono", monospace';
-          ctx.fillStyle = ax.color.replace('0.45', '0.85');
+          ctx.fillStyle = ax.color.replace('0.42', '0.88');
           ctx.fillText(ax.label, cx + pPos.x * sPos + 4, cy + pPos.y * sPos - 3);
         });
       }
 
-      // Draw soft 90% probability boundary halo in Modern Cloud / AO mode
-      if (modelMode === 'modern_cloud') {
-        shells.forEach((_, sIdx) => {
-          const isHighlighted = highlightedShell === null || highlightedShell === sIdx;
-          if (!isHighlighted) return;
-          const shellR = maxShells === 1 ? 58 : minRadius + sIdx * radiusStep;
-          const isOuter = sIdx === shells.length - 1;
-          ctx.beginPath();
-          ctx.arc(cx, cy, shellR, 0, Math.PI * 2);
-          ctx.strokeStyle = isOuter
-            ? 'rgba(56, 189, 248, 0.22)'
-            : 'rgba(148, 163, 184, 0.09)';
-          ctx.setLineDash([1, 5]);
-          ctx.lineWidth = isOuter ? 1.2 : 0.8;
-          ctx.stroke();
-          ctx.setLineDash([]);
-        });
-      }
+      // In AO mode, draw soft translucent 3D figure-8 lobes (AO p)
+      if (modelMode === 'modern_ao' && element.atomicNumber >= 5) {
+        const lobeLen = maxRadius * 0.96;
+        const pAxes: { dir: [number, number, number]; color: string }[] = [
+          { dir: [1, 0, 0], color: 'rgba(251, 146, 60, 0.28)' }, // px (amber)
+          { dir: [0, 1, 0], color: 'rgba(168, 85, 247, 0.28)' }, // pz (purple)
+          { dir: [0, 0, 1], color: 'rgba(52, 211, 153, 0.28)' }, // py (emerald)
+        ];
 
-      // In AO mode, draw 3D figure-8 lobes (AO p) and spherical AO s boundary
-      if (modelMode === 'modern_ao') {
-        // Draw AO s spherical contour
-        const sRadius = maxShells === 1 ? 56 : minRadius + (shells.length - 1) * radiusStep * 0.78;
-        ctx.beginPath();
-        ctx.arc(cx, cy, sRadius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.07)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(56, 189, 248, 0.32)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        pAxes.forEach(({ dir, color }) => {
+          [-1, 1].forEach((sign) => {
+            const steps = 36;
+            ctx.beginPath();
+            for (let i = 0; i <= steps; i++) {
+              const t = (i / steps) * Math.PI;
+              const r = lobeLen * Math.sin(t);
+              const along = sign * r * Math.sin(t);
+              const perp = r * Math.cos(t) * 0.42;
 
-        // If element has p electrons (Z > 4), draw 3D dumbbell lobes along X, Y, Z
-        if (element.atomicNumber >= 5) {
-          const lobeLen = maxRadius * 0.96;
-          const pAxes: { dir: [number, number, number]; color: string }[] = [
-            { dir: [1, 0, 0], color: 'rgba(251, 146, 60, 0.34)' }, // px (amber)
-            { dir: [0, 1, 0], color: 'rgba(168, 85, 247, 0.34)' }, // pz (purple)
-            { dir: [0, 0, 1], color: 'rgba(52, 211, 153, 0.34)' }, // py (emerald)
-          ];
+              const lx = dir[0] ? along : perp;
+              const ly = dir[1] ? along : dir[0] ? perp : 0;
+              const lz = dir[2] ? along : dir[1] ? perp : 0;
 
-          pAxes.forEach(({ dir, color }) => {
-            [-1, 1].forEach((sign) => {
-              const steps = 40;
-              ctx.beginPath();
-              for (let i = 0; i <= steps; i++) {
-                const t = (i / steps) * Math.PI;
-                // Lemniscate / dumbbell polar profile
-                const r = lobeLen * Math.sin(t);
-                const along = sign * r * Math.sin(t);
-                const perp = r * Math.cos(t) * 0.42;
-
-                const lx = dir[0] ? along : perp;
-                const ly = dir[1] ? along : dir[0] ? perp : 0;
-                const lz = dir[2] ? along : dir[1] ? perp : 0;
-
-                const world = rotate3D(lx, ly, lz, camRx, camRy, 0);
-                const pScale = focalLength / (focalLength + world.z);
-                const px = cx + world.x * pScale;
-                const py = cy + world.y * pScale;
-                if (i === 0) ctx.moveTo(px, py);
-                else ctx.lineTo(px, py);
-              }
-              ctx.closePath();
-              ctx.fillStyle = color.replace('0.34', '0.09');
-              ctx.fill();
-              ctx.strokeStyle = color;
-              ctx.lineWidth = 1.1;
-              ctx.stroke();
-            });
+              const world = rotate3D(lx, ly, lz, camRx, camRy, 0);
+              const pScale = focalLength / (focalLength + world.z);
+              const px = cx + world.x * pScale;
+              const py = cy + world.y * pScale;
+              if (i === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fillStyle = color.replace('0.28', '0.07');
+            ctx.fill();
           });
-        }
+        });
       }
 
       interface RenderParticle {
@@ -401,19 +418,60 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
         shellIdx?: number;
         orbitalType?: 's' | 'px' | 'py' | 'pz' | 'd';
         alpha?: number;
+        size?: number;
         isProton?: boolean;
         trail2d?: { x: number; y: number }[];
+        flashAlpha?: number;
       }
 
       const particles: RenderParticle[] = [];
 
       if (modelMode === 'modern_cloud' || modelMode === 'modern_ao') {
-        // 1. Add 3D Electron Cloud probability density micro-dots
-        cloudPointsRef.current.forEach((pt) => {
+        // 1. Update & add Dynamic 3D Probability Cloud Micro-Particles
+        cloudParticlesRef.current.forEach((pt) => {
+          if (isPlaying) {
+            const effDt = dt * speedMultiplier;
+            pt.life += effDt;
+
+            // Quantum scintillation & stochastic respawn inside the orbital probability volume
+            if (pt.life >= pt.maxLife) {
+              const nextPos = sampleOrbitalPosition(
+                pt.shellR,
+                modelMode === 'modern_ao' ? pt.orbitalType : 's'
+              );
+              pt.x = nextPos.x;
+              pt.y = nextPos.y;
+              pt.z = nextPos.z;
+              pt.life = 0;
+              pt.maxLife = 1.2 + Math.random() * 1.8;
+            } else {
+              // Continuous 3D tangential swirl + harmonic radial wave-function breathing
+              const swirlSpeed = (pt.isOuter ? 0.95 : 1.35) * effDt;
+              const cosS = Math.cos(swirlSpeed);
+              const sinS = Math.sin(swirlSpeed);
+              const nx = pt.x * cosS - pt.z * sinS;
+              const nz = pt.x * sinS + pt.z * cosS;
+              pt.x = nx + pt.vx * effDt * 0.35;
+              pt.y = pt.y + pt.vy * effDt * 0.35;
+              pt.z = nz + pt.vz * effDt * 0.35;
+
+              // Gently pull back toward the shell's maximum probability density radius
+              const dist = Math.sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z) || 1;
+              const radialCorrection = (pt.shellR * 0.86 - dist) * 1.8 * effDt;
+              pt.x += (pt.x / dist) * radialCorrection;
+              pt.y += (pt.y / dist) * radialCorrection;
+              pt.z += (pt.z / dist) * radialCorrection;
+            }
+          }
+
           const isHighlighted = highlightedShell === null || highlightedShell === pt.shellIdx;
           const world = rotate3D(pt.x, pt.y, pt.z, camRx, camRy, 0);
           const pScale = focalLength / (focalLength + world.z);
-          const shimmer = 0.75 + 0.25 * Math.sin(timeRef.current * 4 + pt.phase);
+
+          // Smooth fade-in and fade-out envelope over particle quantum lifetime
+          const lifeRatio = pt.life / pt.maxLife;
+          const envelope = Math.sin(lifeRatio * Math.PI);
+          const shimmer = 0.7 + 0.3 * Math.sin(timeRef.current * pt.pulseSpeed + pt.phase);
 
           particles.push({
             type: 'cloud_dot',
@@ -423,48 +481,43 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             scale: pScale,
             shellIdx: pt.shellIdx,
             orbitalType: pt.orbitalType,
-            isOuter: pt.shellIdx === shells.length - 1,
-            alpha: isHighlighted ? pt.baseAlpha * shimmer : 0.04,
+            isOuter: pt.isOuter,
+            size: pt.size,
+            alpha: isHighlighted ? pt.baseAlpha * envelope * shimmer : 0.03,
           });
         });
 
-        // 2. Update & add stochastic quantum electrons (NO fixed circular tracks!)
+        // 2. Update & add High-Velocity Stochastic Quantum Electrons (with smooth 3D wave trails)
         quantumElectronsRef.current.forEach((qe) => {
-          const shellR = maxShells === 1 ? 58 : minRadius + qe.shellIdx * radiusStep;
-
           if (isPlaying) {
-            qe.jumpTimer -= dt * speedMultiplier;
-            if (qe.jumpTimer <= 0) {
-              // Quantum jump / rapid stochastic redirection within the orbital cloud
+            const effDt = dt * speedMultiplier;
+            qe.retargetTimer -= effDt;
+            qe.flashAlpha = Math.max(0, qe.flashAlpha - effDt * 2.5);
+
+            if (qe.retargetTimer <= 0) {
               const target = sampleOrbitalPosition(
-                shellR,
+                qe.shellR,
                 modelMode === 'modern_ao' ? qe.orbitalType : 's'
               );
-              const pullFactor = 6.5 * speedMultiplier;
-              qe.vx = (target.x - qe.x) * pullFactor + (Math.random() - 0.5) * 190;
-              qe.vy = (target.y - qe.y) * pullFactor + (Math.random() - 0.5) * 190;
-              qe.vz = (target.z - qe.z) * pullFactor + (Math.random() - 0.5) * 190;
-              qe.jumpTimer = 0.04 + Math.random() * 0.08;
+              qe.targetX = target.x;
+              qe.targetY = target.y;
+              qe.targetZ = target.z;
+              qe.retargetTimer = 0.06 + Math.random() * 0.11;
+              qe.flashAlpha = 0.9;
             }
 
-            qe.x += qe.vx * dt;
-            qe.y += qe.vy * dt;
-            qe.z += qe.vz * dt;
+            // Smooth spring-like quantum acceleration toward target wave-packet lobe
+            const pull = 14.0;
+            qe.vx = qe.vx * 0.82 + (qe.targetX - qe.x) * pull * effDt * 12;
+            qe.vy = qe.vy * 0.82 + (qe.targetY - qe.y) * pull * effDt * 12;
+            qe.vz = qe.vz * 0.82 + (qe.targetZ - qe.z) * pull * effDt * 12;
 
-            // Keep inside reasonable probability cloud radius
-            const currentDist = Math.sqrt(qe.x * qe.x + qe.y * qe.y + qe.z * qe.z);
-            if (currentDist > shellR * 1.22 || currentDist < 12) {
-              const resetPos = sampleOrbitalPosition(
-                shellR,
-                modelMode === 'modern_ao' ? qe.orbitalType : 's'
-              );
-              qe.x = resetPos.x;
-              qe.y = resetPos.y;
-              qe.z = resetPos.z;
-            }
+            qe.x += qe.vx * effDt;
+            qe.y += qe.vy * effDt;
+            qe.z += qe.vz * effDt;
 
             qe.history.push({ x: qe.x, y: qe.y, z: qe.z });
-            if (qe.history.length > 5) {
+            if (qe.history.length > 7) {
               qe.history.shift();
             }
           }
@@ -488,10 +541,11 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             shellIdx: qe.shellIdx,
             orbitalType: qe.orbitalType,
             trail2d,
+            flashAlpha: qe.flashAlpha,
           });
         });
       } else {
-        // Mode 3: Classical Rutherford-Bohr 3D orbits for comparison
+        // Mode 3: Classical Rutherford-Bohr 3D orbits for comparison only
         shells.forEach((elecCount, sIdx) => {
           const shellR = maxShells === 1 ? 58 : minRadius + sIdx * radiusStep;
           const isOuter = sIdx === shells.length - 1;
@@ -543,9 +597,10 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
         });
       }
 
-      // 3. Add 3D Nucleus Cluster Particles
+      // 3. Add 3D Nucleus Cluster Particles with subtle zero-point vibration
       nucleonsRef.current.forEach((n) => {
-        const world = rotate3D(n.x, n.y, n.z, camRx, camRy, 0);
+        const vib = isPlaying ? 0.35 * Math.sin(timeRef.current * 9 + n.phase) : 0;
+        const world = rotate3D(n.x + vib, n.y - vib, n.z + vib, camRx, camRy, 0);
         const pScale = focalLength / (focalLength + world.z);
         particles.push({
           type: 'nucleon',
@@ -563,7 +618,8 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
       // 4. Render all depth-sorted 3D items
       particles.forEach((p) => {
         if (p.type === 'cloud_dot') {
-          const dotR = Math.max(0.9, (p.isOuter ? 1.8 : 1.3) * p.scale);
+          const baseSize = p.size ?? (p.isOuter ? 1.8 : 1.2);
+          const dotR = Math.max(0.8, baseSize * p.scale);
           ctx.beginPath();
           ctx.arc(p.x2d, p.y2d, dotR, 0, Math.PI * 2);
 
@@ -610,13 +666,13 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
           // Electron particle
           const isHighlighted =
             highlightedShell === null || highlightedShell === p.shellIdx;
-          const baseR = p.isOuter ? 4.2 : 3.0;
+          const baseR = p.isOuter ? 4.0 : 2.9;
           const r = Math.max(1.8, baseR * p.scale);
           const alpha = !isHighlighted
             ? 0.14
-            : Math.min(1, Math.max(0.4, 0.8 - p.z3d / 220));
+            : Math.min(1, Math.max(0.42, 0.85 - p.z3d / 220));
 
-          // Draw stochastic quantum motion flash trail (showing rapid non-orbital movement)
+          // Draw stochastic quantum wave-packet motion trail
           if (isHighlighted && p.trail2d && p.trail2d.length > 1) {
             ctx.beginPath();
             p.trail2d.forEach((pt, idx) => {
@@ -624,16 +680,25 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
               else ctx.lineTo(pt.x, pt.y);
             });
             ctx.strokeStyle = p.isOuter
-              ? `rgba(56, 189, 248, ${alpha * 0.42})`
-              : `rgba(226, 232, 240, ${alpha * 0.25})`;
-            ctx.lineWidth = p.isOuter ? 1.5 : 1;
+              ? `rgba(56, 189, 248, ${alpha * 0.48})`
+              : `rgba(226, 232, 240, ${alpha * 0.28})`;
+            ctx.lineWidth = p.isOuter ? 1.6 : 1.1;
+            ctx.stroke();
+          }
+
+          // Quantum jump probability ripple
+          if (p.isOuter && isHighlighted && (p.flashAlpha ?? 0) > 0.05) {
+            ctx.beginPath();
+            ctx.arc(p.x2d, p.y2d, r * (2.2 + (1 - (p.flashAlpha ?? 0)) * 2.0), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(125, 211, 252, ${(p.flashAlpha ?? 0) * 0.45})`;
+            ctx.lineWidth = 1;
             ctx.stroke();
           }
 
           if (p.isOuter && isHighlighted) {
             ctx.beginPath();
-            ctx.arc(p.x2d, p.y2d, r * 2.2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(56, 189, 248, ${alpha * 0.35})`;
+            ctx.arc(p.x2d, p.y2d, r * 2.3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(56, 189, 248, ${alpha * 0.38})`;
             ctx.fill();
           }
 
@@ -707,11 +772,11 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
               modelMode === 'modern_cloud'
                 ? 'bg-sky-500 text-slate-950 font-bold'
-                : 'text-slate-300 hover:text-white'
+                : 'text-slate-200 hover:text-white'
             }`}
           >
             <Sparkles className="w-3 h-3" />
-            <span>Hiện đại (Đám mây e)</span>
+            <span>Đám mây hạt 3D</span>
           </button>
           <button
             type="button"
@@ -719,7 +784,7 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
               modelMode === 'modern_ao'
                 ? 'bg-sky-500 text-slate-950 font-bold'
-                : 'text-slate-300 hover:text-white'
+                : 'text-slate-200 hover:text-white'
             }`}
           >
             <Compass className="w-3 h-3" />
@@ -731,7 +796,7 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
               modelMode === 'bohr_compare'
                 ? 'bg-sky-500 text-slate-950 font-bold'
-                : 'text-slate-300 hover:text-white'
+                : 'text-slate-200 hover:text-white'
             }`}
           >
             <Orbit className="w-3 h-3" />
@@ -740,12 +805,28 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
         </div>
 
         <div className="flex items-center gap-1">
+          {modelMode !== 'bohr_compare' && (
+            <button
+              type="button"
+              onClick={() =>
+                setCloudDensity((prev) => (prev === 'high' ? 'normal' : 'high'))
+              }
+              title="Đổi mật độ hạt đám mây xác suất electron"
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer border ${
+                cloudDensity === 'high'
+                  ? 'bg-sky-500/25 border-sky-400/60 text-sky-200'
+                  : 'bg-white/10 border-white/10 text-slate-200'
+              }`}
+            >
+              {cloudDensity === 'high' ? 'Mật độ: Cao' : 'Mật độ: Chuẩn'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() =>
               setSpeedMultiplier((prev) => (prev === 1 ? 2 : prev === 2 ? 0.5 : 1))
             }
-            title="Đổi tốc độ chuyển động electron"
+            title="Đổi tốc độ chuyển động đám mây hạt electron"
             className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-mono font-bold text-sky-300 transition-colors cursor-pointer"
           >
             {speedMultiplier}x
@@ -780,9 +861,9 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             className="w-[245px] h-[220px] cursor-grab active:cursor-grabbing touch-none select-none"
-            aria-label={`Mô hình nguyên tử hiện đại 3D của ${element.name}`}
+            aria-label={`Mô hình đám mây xác suất electron 3D của ${element.name}`}
           />
-          <span className="text-[10px] text-slate-400 -mt-1">
+          <span className="text-[10px] text-slate-300 -mt-1">
             Kéo chuột trên hình để xoay đám mây electron 3D 360°
           </span>
         </div>
@@ -792,7 +873,7 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
           <div className="font-semibold text-sky-300 text-[11px]">
             {modelMode === 'bohr_compare'
               ? `${element.shells.length} lớp quỹ đạo Bohr:`
-              : `Mật độ đám mây (${element.shells.length} lớp):`}
+              : `Mật độ xác suất |ψ|² (${element.shells.length} lớp):`}
           </div>
           <div className="space-y-1 max-h-[145px] overflow-y-auto pr-1">
             {element.shells.map((count, i) => {
@@ -808,11 +889,11 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
                       ? 'bg-sky-500 text-slate-950 font-bold'
                       : isOuter
                       ? 'bg-sky-500/25 border border-sky-400/50 text-white font-semibold'
-                      : 'bg-white/5 hover:bg-white/10 text-slate-300'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-200'
                   }`}
                 >
                   <span>
-                    {SHELL_NAMES[i]} {isOuter ? '(Ngoài)' : ''}
+                    {SHELL_NAMES[i]} {isOuter ? '(Hóa trị)' : ''}
                   </span>
                   <span className="font-mono tabular-nums font-bold">{count}e</span>
                 </div>
@@ -823,25 +904,22 @@ export const Atom3DCanvas: React.FC<Atom3DCanvasProps> = ({ element }) => {
       </div>
 
       {/* SGK Hoa 10 Explanation Note for Modern Atomic Model */}
-      <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] text-slate-300 leading-relaxed">
+      <div className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-[11px] text-slate-200 leading-relaxed">
         {modelMode === 'modern_cloud' && (
           <span>
-            <strong className="text-sky-300">Mô hình hiện đại:</strong> Các electron chuyển động{' '}
-            <strong className="text-white">rất nhanh</strong> quanh hạt nhân và{' '}
-            <strong className="text-white">không theo những quỹ đạo cố định</strong>, tạo thành{' '}
-            <strong className="text-sky-300">đám mây electron</strong> (vùng có xác suất tìm thấy electron khoảng 90%).
+            <strong className="text-sky-300">Đám mây xác suất electron (|ψ|²):</strong> Các hạt vi mô chuyển động hỗn loạn 3D không theo quỹ đạo tĩnh; vùng hạt sáng càng dày đặc biểu thị xác suất tìm thấy electron càng lớn (≈ 90%).
           </span>
         )}
         {modelMode === 'modern_ao' && (
           <span>
             <strong className="text-sky-300">Orbital nguyên tử (AO):</strong>{' '}
-            <strong className="text-sky-300">AO s</strong> có dạng hình cầu; các{' '}
-            <strong className="text-amber-300">AO p (px, py, pz)</strong> có dạng hình số 8 nổi định hướng theo 3 trục không gian <span className="font-mono">x, y, z</span>.
+            <strong className="text-sky-300">AO s</strong> có đám mây hạt hình cầu; các{' '}
+            <strong className="text-amber-300">AO p (px, py, pz)</strong> có mật độ hạt tập trung thành hình số 8 nổi theo 3 trục <span className="font-mono">x, y, z</span>.
           </span>
         )}
         {modelMode === 'bohr_compare' && (
           <span>
-            <strong className="text-sky-300">Mô hình Rutherford–Bohr (So sánh):</strong> Biểu diễn đơn giản hóa các electron quay trên những quỹ đạo tròn/bầu dục xác định theo từng lớp <span className="font-mono">K, L, M...</span>
+            <strong className="text-sky-300">Mô hình Rutherford–Bohr (Đối chiếu):</strong> Biểu diễn cổ điển với các electron chuyển động trên quỹ đạo tròn xác định theo từng lớp <span className="font-mono">K, L, M...</span>
           </span>
         )}
       </div>

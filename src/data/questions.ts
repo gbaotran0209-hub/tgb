@@ -1,11 +1,34 @@
+export type QuizDifficultyLevel = 'Thông hiểu' | 'Vận dụng' | 'Vận dụng cao';
+
 export interface QuizQuestion {
   id: number;
-  level: 'Cơ bản (Dễ)' | 'Thông hiểu' | 'Vận dụng';
+  level: QuizDifficultyLevel;
+  sectionCode: 'a' | 'b' | 'c';
   topic: string;
   question: string;
   options: string[];
   correctIndex: number;
   explanation: string;
+}
+
+export interface TrueFalseStatement {
+  id: 'a' | 'b' | 'c' | 'd';
+  text: string;
+  isTrue: boolean;
+  explanation: string;
+}
+
+export interface TrueFalseQuestion {
+  id: number;
+  title: string;
+  topic: string;
+  stem: string;
+  statements: [
+    TrueFalseStatement,
+    TrueFalseStatement,
+    TrueFalseStatement,
+    TrueFalseStatement,
+  ];
 }
 
 export interface WorkedExample {
@@ -17,11 +40,33 @@ export interface WorkedExample {
   conclusion: string;
 }
 
+/**
+ * Quy tắc tính điểm Phần II (Trắc nghiệm Đúng / Sai - Tối đa 3,0 điểm cho 3 câu):
+ * - Đúng 1 ý trong 1 câu: 0,1 điểm
+ * - Đúng 2 ý trong 1 câu: 0,25 điểm
+ * - Đúng 3 ý trong 1 câu: 0,5 điểm
+ * - Đúng 4 ý trong 1 câu: 1,0 điểm
+ */
+export function getTrueFalseQuestionScore(correctCount: number): number {
+  switch (correctCount) {
+    case 4:
+      return 1.0;
+    case 3:
+      return 0.5;
+    case 2:
+      return 0.25;
+    case 1:
+      return 0.1;
+    default:
+      return 0;
+  }
+}
+
 export const WORKED_EXAMPLES: WorkedExample[] = [
   {
     id: 1,
     title: 'Ví dụ 1: So sánh bán kính các nguyên tố trong cùng một chu kì',
-    level: 'Cơ bản',
+    level: 'Thông hiểu',
     problem:
       'Sắp xếp các nguyên tố sau theo chiều bán kính nguyên tử giảm dần: Na (Z = 11), Mg (Z = 12), Al (Z = 13), Si (Z = 14), Cl (Z = 17).',
     steps: [
@@ -29,12 +74,13 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
       'Bước 2: Áp dụng quy luật trong một chu kì: Từ trái sang phải theo chiều tăng dần của điện tích hạt nhân (Z tăng từ 11 đến 17), lực hút giữa hạt nhân và các electron lớp ngoài cùng tăng dần.',
       'Bước 3: Do số lớp electron không đổi (đều bằng 3 lớp) nhưng lực hút hạt nhân tăng nên bán kính nguyên tử giảm dần từ Na đến Cl.',
     ],
-    conclusion: 'Thứ tự bán kính giảm dần: R(Na) > R(Mg) > R(Al) > R(Si) > R(Cl) (186 pm > 160 pm > 143 pm > 117 pm > 99 pm).',
+    conclusion:
+      'Thứ tự bán kính giảm dần: Na > Mg > Al > Si > Cl (186 pm > 160 pm > 143 pm > 117 pm > 99 pm).',
   },
   {
     id: 2,
     title: 'Ví dụ 2: So sánh bán kính các nguyên tố trong cùng một nhóm A',
-    level: 'Cơ bản',
+    level: 'Thông hiểu',
     problem:
       'Sắp xếp các nguyên tố kim loại kiềm nhóm IA: Li (Z = 3), Na (Z = 11), K (Z = 19), Rb (Z = 37), Cs (Z = 55) theo chiều bán kính nguyên tử tăng dần.',
     steps: [
@@ -42,311 +88,449 @@ export const WORKED_EXAMPLES: WorkedExample[] = [
       'Bước 2: Áp dụng quy luật trong một nhóm A: Khi đi từ trên xuống dưới, số lớp electron tăng dần (từ 2 lớp ở Li lên 6 lớp ở Cs).',
       'Bước 3: Sự tăng số lớp electron là yếu tố quyết định làm khoảng cách từ hạt nhân tới lớp electron ngoài cùng tăng lên.',
     ],
-    conclusion: 'Thứ tự bán kính tăng dần: R(Li) < R(Na) < R(K) < R(Rb) < R(Cs) (152 pm < 186 pm < 227 pm < 248 pm < 265 pm).',
+    conclusion:
+      'Thứ tự bán kính tăng dần: Li < Na < K < Rb < Cs (152 pm < 186 pm < 227 pm < 248 pm < 265 pm).',
   },
   {
     id: 3,
     title: 'Ví dụ 3: So sánh bán kính các nguyên tố khác chu kì và khác nhóm A (Phương pháp bắc cầu)',
-    level: 'Vận dụng',
+    level: 'Vận dụng cao',
     problem:
-      'Cho các nguyên tố: F (Z = 9), O (Z = 8), Na (Z = 11), K (Z = 19). Hãy sắp xếp các nguyên tố theo chiều bán kính nguyên tử tăng dần.',
+      'Cho các nguyên tố: X (Z = 12), Y (Z = 16) và T (Z = 19). Hãy sắp xếp các nguyên tố theo chiều bán kính nguyên tử giảm dần.',
     steps: [
-      'Bước 1: Xác định vị trí từng nguyên tố: O (chu kì 2, nhóm VIA), F (chu kì 2, nhóm VIIA), Na (chu kì 3, nhóm IA), K (chu kì 4, nhóm IA).',
-      'Bước 2: So sánh nhóm nguyên tố ở chu kì 2: O và F cùng thuộc chu kì 2, vì Z(O) = 8 < Z(F) = 9 nên R(F) < R(O).',
-      'Bước 3: So sánh nhóm nguyên tố ở nhóm IA: Na (chu kì 3) và K (chu kì 4) cùng thuộc nhóm IA nên R(Na) < R(K).',
-      'Bước 4: Bắc cầu giữa chu kì 2 và chu kì 3: Na ở đầu chu kì 3 (3 lớp e, nhóm IA) có bán kính lớn hơn tất cả các nguyên tố ở chu kì 2 (chỉ có 2 lớp e), nên R(O) < R(Na).',
+      'Bước 1: Xác định vị trí từng nguyên tố: X là Mg (Z = 12, chu kì 3, nhóm IIA); Y là S (Z = 16, chu kì 3, nhóm VIA); T là K (Z = 19, chu kì 4, nhóm IA).',
+      'Bước 2: So sánh X và Y cùng thuộc chu kì 3: Vì Z(X) = 12 < Z(Y) = 16 nên bán kính X > Y.',
+      'Bước 3: So sánh T (chu kì 4, 4 lớp electron, đứng đầu chu kì ở nhóm IA) với X (chu kì 3, 3 lớp electron): T có nhiều lớp electron hơn và nằm ở nhóm IA nên bán kính T > X.',
     ],
-    conclusion: 'Thứ tự bán kính nguyên tử tăng dần: R(F) < R(O) < R(Na) < R(K) (64 pm < 66 pm < 186 pm < 227 pm).',
+    conclusion: 'Thứ tự bán kính nguyên tử giảm dần: T > X > Y (tức K > Mg > S).',
   },
 ];
 
+/**
+ * PHẦN I. TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (7,0 ĐIỂM)
+ * - a) Thông hiểu: Câu 1 -> Câu 8
+ * - b) Vận dụng: Câu 9 -> Câu 15
+ * - c) Vận dụng cao: Câu 16 -> Câu 21
+ */
 export const QUIZ_QUESTIONS: QuizQuestion[] = [
+  // ==================== a) THÔNG HIỂU (Câu 1 - 8) ====================
   {
     id: 1,
-    level: 'Cơ bản (Dễ)',
-    topic: 'Quy luật trong một chu kì',
-    question:
-      'Trong một chu kì của bảng tuần hoàn, khi đi từ trái sang phải theo chiều tăng dần của điện tích hạt nhân, bán kính nguyên tử của các nguyên tố nhóm A biến đổi như thế nào?',
+    level: 'Thông hiểu',
+    sectionCode: 'a',
+    topic: 'Khái niệm bán kính nguyên tử',
+    question: 'Bán kính nguyên tử được xác định gần đúng bằng',
     options: [
-      'Tăng dần',
-      'Giảm dần',
-      'Không thay đổi',
-      'Tăng rồi sau đó giảm dần',
+      'Khoảng cách từ hạt nhân đến electron ngoài cùng.',
+      'Một nửa khoảng cách giữa hai hạt nhân của hai nguyên tử giống nhau liên kết với nhau.',
+      'Khoảng cách từ hạt nhân đến lớp electron thứ nhất.',
+      'Khoảng cách giữa hai electron ngoài cùng.',
     ],
     correctIndex: 1,
     explanation:
-      'Trong một chu kì, từ trái sang phải theo chiều tăng điện tích hạt nhân (Z), số lớp electron không đổi nhưng lực hút của hạt nhân với electron lớp ngoài cùng tăng nên bán kính nguyên tử giảm dần.',
+      'Bán kính nguyên tử được xác định gần đúng bằng một nửa khoảng cách trung bình giữa hai hạt nhân của hai nguyên tử giống nhau liên kết với nhau (hoặc gần nhau nhất trong chất rắn đơn chất).',
   },
   {
     id: 2,
-    level: 'Cơ bản (Dễ)',
-    topic: 'Quy luật trong một nhóm A',
-    question:
-      'Trong một nhóm A của bảng tuần hoàn, theo chiều từ trên xuống dưới (chiều tăng của điện tích hạt nhân), bán kính nguyên tử của các nguyên tố biến đổi như thế nào?',
-    options: [
-      'Giảm dần do điện tích hạt nhân tăng',
-      'Tăng dần do số lớp electron tăng lên',
-      'Không đổi vì có cùng số electron lớp ngoài cùng',
-      'Giảm dần rồi tăng dần',
-    ],
+    level: 'Thông hiểu',
+    sectionCode: 'a',
+    topic: 'Quy luật trong một chu kì',
+    question: 'Trong một chu kì, khi đi từ trái sang phải, bán kính nguyên tử nhìn chung',
+    options: ['Tăng dần.', 'Giảm dần.', 'Không đổi.', 'Tăng rồi giảm.'],
     correctIndex: 1,
     explanation:
-      'Trong một nhóm A, đi từ trên xuống dưới, số lớp electron tăng dần (mỗi chu kì tăng thêm 1 lớp electron) nên bán kính nguyên tử tăng dần.',
+      'Trong một chu kì, khi đi từ trái sang phải theo chiều tăng dần của điện tích hạt nhân, bán kính nguyên tử nhìn chung giảm dần.',
   },
   {
     id: 3,
-    level: 'Cơ bản (Dễ)',
-    topic: 'Khái niệm bán kính nguyên tử',
-    question:
-      'Phát biểu nào sau đây nêu đúng khái niệm về bán kính nguyên tử theo chương trình Hóa học 10?',
+    level: 'Thông hiểu',
+    sectionCode: 'a',
+    topic: 'Quy luật trong một nhóm A',
+    question: 'Trong một nhóm A, khi đi từ trên xuống dưới, bán kính nguyên tử nhìn chung',
     options: [
-      'Là khoảng cách từ tâm hạt nhân đến lớp electron trong cùng của nguyên tử',
-      'Là khoảng cách từ tâm hạt nhân đến electron ở lớp ngoài cùng của nguyên tử',
-      'Là đường kính của hạt nhân nguyên tử tính bằng đơn vị picomet (pm)',
-      'Là tổng khoảng cách của tất cả các lớp electron cộng lại',
+      'Giảm dần do điện tích hạt nhân tăng.',
+      'Không đổi do số electron hóa trị không đổi.',
+      'Tăng dần do số lớp electron tăng.',
+      'Giảm dần do lực hút hạt nhân tăng.',
     ],
-    correctIndex: 1,
+    correctIndex: 2,
     explanation:
-      'Bán kính nguyên tử là khoảng cách từ tâm hạt nhân đến lớp electron ngoài cùng. Thực nghiệm thường xác định bằng một nửa khoảng cách tâm giữa hai nguyên tử gần nhau nhất trong phân tử hoặc tinh thể.',
+      'Trong một nhóm A, khi đi từ trên xuống dưới, bán kính nguyên tử nhìn chung tăng dần do số lớp electron tăng lên.',
   },
   {
     id: 4,
-    level: 'Cơ bản (Dễ)',
-    topic: 'Vị trí nguyên tố trong bảng tuần hoàn',
-    question:
-      'Nguyên tố Aluminium (Nhôm, Al) có số hiệu nguyên tử Z = 13 và cấu hình electron là 1s² 2s² 2p⁶ 3s² 3p¹. Vị trí của Al trong bảng tuần hoàn là:',
+    level: 'Thông hiểu',
+    sectionCode: 'a',
+    topic: 'Giải thích quy luật trong chu kì',
+    question: 'Nguyên nhân chủ yếu khiến bán kính nguyên tử giảm trong một chu kì là',
     options: [
-      'Ô số 13, chu kì 3, nhóm IIIA',
-      'Ô số 13, chu kì 3, nhóm IIIB',
-      'Ô số 13, chu kì 2, nhóm IIIA',
-      'Ô số 3, chu kì 3, nhóm IA',
+      'Số lớp electron tăng lên.',
+      'Điện tích hạt nhân tăng, lực hút electron mạnh hơn trong khi số lớp electron không đổi.',
+      'Số proton giảm dần.',
+      'Số electron hóa trị giảm dần.',
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     explanation:
-      'Al có Z = 13 → ở ô số 13; có 3 lớp electron → thuộc chu kì 3; là nguyên tố p có 3 electron lớp ngoài cùng (3s² 3p¹) → thuộc nhóm IIIA.',
+      'Trong cùng một chu kì, số lớp electron không đổi nhưng điện tích hạt nhân tăng dần dẫn đến lực hút giữa hạt nhân với các electron lớp ngoài cùng mạnh hơn, làm bán kính nguyên tử giảm.',
   },
   {
     id: 5,
     level: 'Thông hiểu',
-    topic: 'Giải thích quy luật biến đổi',
+    sectionCode: 'a',
+    topic: 'So sánh bán kính trong chu kì 3',
     question:
-      'Vì sao khi đi từ trái sang phải trong cùng một chu kì, bán kính nguyên tử lại giảm dần?',
-    options: [
-      'Vì số lớp electron giảm dần từ trái sang phải',
-      'Vì số lớp electron không đổi nhưng điện tích hạt nhân tăng, làm lực hút giữa hạt nhân với các electron lớp ngoài cùng tăng lên',
-      'Vì khối lượng nguyên tử giảm dần làm đám mây electron co lại',
-      'Vì số neutron trong hạt nhân giảm dần',
-    ],
-    correctIndex: 1,
+      'Các nguyên tử Na, Mg, Al cùng thuộc chu kì 3. Thứ tự bán kính nguyên tử giảm dần là',
+    options: ['Na > Mg > Al.', 'Al > Mg > Na.', 'Mg > Na > Al.', 'Na > Al > Mg.'],
+    correctIndex: 0,
     explanation:
-      'Các nguyên tố trong cùng một chu kì có cùng số lớp electron. Khi Z tăng từ trái sang phải, lực hút tĩnh điện giữa hạt nhân và electron lớp ngoài cùng mạnh hơn, kéo lớp vỏ lại gần hạt nhân hơn làm bán kính giảm.',
+      'Na (Z = 11), Mg (Z = 12), Al (Z = 13) cùng thuộc chu kì 3. Đi từ trái sang phải theo chiều Z tăng, bán kính nguyên tử giảm dần: Na > Mg > Al.',
   },
   {
     id: 6,
     level: 'Thông hiểu',
-    topic: 'Vị trí nguyên tố nhóm B',
+    sectionCode: 'a',
+    topic: 'So sánh bán kính trong nhóm IA',
     question:
-      'Nguyên tố Iron (Sắt, Fe) có số hiệu nguyên tử Z = 26, cấu hình electron là [Ar] 3d⁶ 4s². Vị trí chính xác của Fe trong bảng tuần hoàn là:',
-    options: [
-      'Ô số 26, chu kì 4, nhóm IIA',
-      'Ô số 26, chu kì 4, nhóm VIIIB',
-      'Ô số 26, chu kì 4, nhóm VIB',
-      'Ô số 26, chu kì 3, nhóm VIIIB',
-    ],
+      'Các nguyên tử Li, Na, K cùng thuộc nhóm IA. Thứ tự bán kính nguyên tử tăng dần là',
+    options: ['K < Na < Li.', 'Li < Na < K.', 'Na < Li < K.', 'Li < K < Na.'],
     correctIndex: 1,
     explanation:
-      'Fe có Z = 26 → ô số 26; có 4 lớp electron → chu kì 4; là nguyên tố họ d có tổng electron hóa trị (3d⁶ 4s²) là 6 + 2 = 8 electron → thuộc nhóm VIIIB (cột 8).',
+      'Li, Na, K cùng thuộc nhóm IA. Đi từ trên xuống dưới (Li → Na → K), số lớp electron tăng dần (2 → 3 → 4 lớp) nên bán kính nguyên tử tăng dần: Li < Na < K.',
   },
   {
     id: 7,
     level: 'Thông hiểu',
-    topic: 'So sánh bán kính cùng chu kì',
-    question:
-      'Cho các nguyên tố thuộc chu kì 2: Li (Z = 3), Be (Z = 4), C (Z = 6), O (Z = 8), F (Z = 9). Nguyên tố nào có bán kính nguyên tử nhỏ nhất?',
-    options: [
-      'Lithium (Li)',
-      'Beryllium (Be)',
-      'Oxygen (O)',
-      'Fluorine (F)',
-    ],
-    correctIndex: 3,
+    sectionCode: 'a',
+    topic: 'Đặc điểm nguyên tử cùng chu kì',
+    question: 'Hai nguyên tử thuộc cùng một chu kì có cùng số',
+    options: ['Proton.', 'Electron hóa trị.', 'Lớp electron.', 'Neutron.'],
+    correctIndex: 2,
     explanation:
-      'Trong chu kì 2, từ Li (Z = 3) đến F (Z = 9), bán kính nguyên tử giảm dần theo chiều tăng điện tích hạt nhân. Do đó F (Z = 9) có bán kính nhỏ nhất (64 pm).',
+      'Chu kì là dãy các nguyên tố mà nguyên tử của chúng có cùng số lớp electron (Số thứ tự chu kì = Số lớp electron).',
   },
   {
     id: 8,
     level: 'Thông hiểu',
-    topic: 'So sánh bán kính cùng nhóm A',
-    question:
-      'Trong nhóm halogen (nhóm VIIA) gồm: F (Z = 9), Cl (Z = 17), Br (Z = 35), I (Z = 53), thứ tự bán kính nguyên tử đúng là:',
-    options: [
-      'R(F) > R(Cl) > R(Br) > R(I)',
-      'R(F) < R(Cl) < R(Br) < R(I)',
-      'R(Cl) < R(F) < R(Br) < R(I)',
-      'R(I) < R(Br) < R(F) < R(Cl)',
-    ],
-    correctIndex: 1,
-    explanation:
-      'Các nguyên tố F, Cl, Br, I cùng thuộc nhóm VIIA. Đi từ trên xuống dưới (F → Cl → Br → I), số lớp electron tăng từ 2 lên 5 lớp nên bán kính nguyên tử tăng dần: R(F) < R(Cl) < R(Br) < R(I).',
-  },
-  {
-    id: 9,
-    level: 'Thông hiểu',
-    topic: 'Cực trị bán kính trong một chu kì',
-    question:
-      'Không tính khí hiếm, trong mỗi chu kì (từ chu kì 2 đến chu kì 6), nguyên tố có bán kính nguyên tử lớn nhất luôn thuộc nhóm nào?',
-    options: [
-      'Nhóm VIIA (Halogen)',
-      'Nhóm IIA (Kim loại kiềm thổ)',
-      'Nhóm IA (Kim loại kiềm)',
-      'Nhóm IVA',
-    ],
+    sectionCode: 'a',
+    topic: 'Đặc điểm nguyên tử cùng nhóm A',
+    question: 'Hai nguyên tử thuộc cùng một nhóm A thường có cùng số',
+    options: ['Lớp electron.', 'Proton.', 'Electron hóa trị.', 'Neutron.'],
     correctIndex: 2,
     explanation:
-      'Trong một chu kì, bán kính nguyên tử giảm dần từ trái sang phải. Vì vậy nguyên tố đứng đầu chu kì (Kim loại kiềm - Nhóm IA) luôn có bán kính nguyên tử lớn nhất trong chu kì đó.',
+      'Nguyên tử các nguyên tố trong cùng một nhóm A có cùng số electron hóa trị (bằng số thứ tự của nhóm A, trừ He).',
+  },
+
+  // ==================== b) VẬN DỤNG (Câu 9 - 15) ====================
+  {
+    id: 9,
+    level: 'Vận dụng',
+    sectionCode: 'b',
+    topic: 'So sánh bán kính theo số hiệu nguyên tử Z (Chu kì 2)',
+    question:
+      'Cho các nguyên tố O (Z = 8), F (Z = 9), N (Z = 7). Thứ tự bán kính nguyên tử giảm dần là',
+    options: ['F > O > N.', 'N > O > F.', 'O > N > F.', 'N > F > O.'],
+    correctIndex: 1,
+    explanation:
+      'N (Z = 7), O (Z = 8), F (Z = 9) đều có 2 lớp electron (cùng thuộc chu kì 2). Theo chiều tăng điện tích hạt nhân Z (7 < 8 < 9), bán kính nguyên tử giảm dần: N > O > F.',
   },
   {
     id: 10,
     level: 'Vận dụng',
-    topic: 'So sánh bán kính khác chu kì và nhóm',
+    sectionCode: 'b',
+    topic: 'So sánh bán kính theo số hiệu nguyên tử Z (Nhóm IIA)',
     question:
-      'Cho các nguyên tố: Na (Z = 11), Mg (Z = 12), K (Z = 19). Thứ tự sắp xếp theo chiều bán kính nguyên tử tăng dần là:',
-    options: [
-      'Mg < Na < K',
-      'Na < Mg < K',
-      'K < Na < Mg',
-      'Mg < K < Na',
-    ],
-    correctIndex: 0,
+      'Cho các nguyên tố Be (Z = 4), Mg (Z = 12), Ca (Z = 20). Thứ tự bán kính nguyên tử giảm dần là',
+    options: ['Be > Mg > Ca.', 'Mg > Ca > Be.', 'Ca > Mg > Be.', 'Ca > Be > Mg.'],
+    correctIndex: 2,
     explanation:
-      'Na (Z = 11) và Mg (Z = 12) cùng thuộc chu kì 3 nên R(Mg) < R(Na). Na (chu kì 3) và K (chu kì 4) cùng thuộc nhóm IA nên R(Na) < R(K). Vậy R(Mg) < R(Na) < R(K) (160 pm < 186 pm < 227 pm).',
+      'Be (chu kì 2), Mg (chu kì 3), Ca (chu kì 4) cùng thuộc nhóm IIA. Từ trên xuống dưới bán kính tăng dần (Be < Mg < Ca), nên thứ tự bán kính giảm dần là: Ca > Mg > Be.',
   },
   {
     id: 11,
     level: 'Vận dụng',
-    topic: 'So sánh bán kính bằng phương pháp bắc cầu',
-    question:
-      'Cho 4 nguyên tố: F (Z = 9), Si (Z = 14), P (Z = 15), Cl (Z = 17). Dãy các nguyên tố được sắp xếp theo chiều bán kính nguyên tử giảm dần là:',
+    sectionCode: 'b',
+    topic: 'Giải thích so sánh bán kính Na và Cl',
+    question: 'Xét Na (Z = 11) và Cl (Z = 17). Nhận định nào đúng?',
     options: [
-      'Si > P > Cl > F',
-      'F > Cl > P > Si',
-      'Cl > P > Si > F',
-      'Si > Cl > P > F',
+      'Na có bán kính nhỏ hơn Cl vì Na có ít electron hơn.',
+      'Na có bán kính lớn hơn Cl vì chúng cùng chu kì và điện tích hạt nhân của Na nhỏ hơn.',
+      'Na và Cl có bán kính bằng nhau vì có cùng số lớp electron.',
+      'Cl có bán kính lớn hơn Na vì có nhiều proton hơn.',
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     explanation:
-      'Si (Z=14), P (Z=15), Cl (Z=17) cùng thuộc chu kì 3 nên chiều giảm bán kính là R(Si) > R(P) > R(Cl). Còn Cl (chu kì 3) và F (chu kì 2) cùng thuộc nhóm VIIA nên R(Cl) > R(F). Vậy: Si > P > Cl > F.',
+      'Na (Z = 11) và Cl (Z = 17) cùng thuộc chu kì 3 (đều có 3 lớp electron). Vì điện tích hạt nhân của Na nhỏ hơn Cl nên lực hút của hạt nhân với electron ngoài cùng ở Na yếu hơn, do đó Na có bán kính lớn hơn Cl.',
   },
   {
     id: 12,
     level: 'Vận dụng',
-    topic: 'So sánh bán kính 4 nguyên tố bất kỳ',
+    sectionCode: 'b',
+    topic: 'So sánh bán kính theo số lớp electron trong nhóm A',
     question:
-      'Cho các nguyên tố: Li (Z = 3), N (Z = 7), O (Z = 8), Na (Z = 11). Thứ tự tăng dần bán kính nguyên tử của các nguyên tố trên là:',
+      'Nguyên tử X có 3 lớp electron, nguyên tử Y có 4 lớp electron và cả hai thuộc cùng nhóm A. So sánh bán kính nguyên tử X và Y.',
     options: [
-      'O < N < Li < Na',
-      'Li < N < O < Na',
-      'Na < Li < N < O',
-      'O < Li < N < Na',
+      'X > Y.',
+      'X < Y.',
+      'X = Y.',
+      'Không thể dự đoán theo quy luật biến đổi trong nhóm.',
     ],
-    correctIndex: 0,
+    correctIndex: 1,
     explanation:
-      'Li (Z=3), N (Z=7), O (Z=8) cùng thuộc chu kì 2 nên R(O) < R(N) < R(Li). Li (chu kì 2) và Na (chu kì 3) cùng thuộc nhóm IA nên R(Li) < R(Na). Kết hợp lại: O < N < Li < Na.',
+      'Trong cùng một nhóm A, nguyên tử có số lớp electron nhiều hơn thì có bán kính lớn hơn. Vì X có 3 lớp electron còn Y có 4 lớp electron nên bán kính X < Y.',
   },
   {
     id: 13,
     level: 'Vận dụng',
-    topic: 'Liên hệ cấu hình electron và bán kính',
+    sectionCode: 'b',
+    topic: 'So sánh bán kính ba nguyên tố X, Y, Z cùng chu kì',
     question:
-      'Cho ba nguyên tố X, Y, T có cấu hình electron lần lượt là: X: 1s² 2s² 2p⁶ 3s¹; Y: 1s² 2s² 2p⁶ 3s² 3p¹; T: 1s² 2s² 2p⁶ 3s² 3p⁵. Nhận xét nào sau đây đúng?',
-    options: [
-      'Bán kính nguyên tử: R(X) > R(Y) > R(T)',
-      'Bán kính nguyên tử: R(T) > R(Y) > R(X)',
-      'Cả 3 nguyên tố đều là kim loại thuộc nhóm A',
-      'X, Y, T thuộc 3 chu kì khác nhau',
-    ],
-    correctIndex: 0,
+      'Ba nguyên tố X, Y, Z thuộc cùng chu kì và có số hiệu nguyên tử lần lượt là 11, 13, 16. Thứ tự bán kính tăng dần là',
+    options: ['X < Y < Z.', 'Z < Y < X.', 'Y < X < Z.', 'X < Z < Y.'],
+    correctIndex: 1,
     explanation:
-      'X là Na (Z=11), Y là Al (Z=13), T là Cl (Z=17). Cả 3 đều có 3 lớp electron (cùng thuộc chu kì 3). Theo chiều Z tăng (11 < 13 < 17), bán kính giảm dần: R(X) > R(Y) > R(T).',
+      'Trong cùng một chu kì (chu kì 3), điện tích hạt nhân tăng theo thứ tự X (Z = 11) < Y (Z = 13) < Z (Z = 16) nên bán kính giảm dần X > Y > Z. Vậy thứ tự bán kính tăng dần là: Z < Y < X.',
   },
   {
     id: 14,
     level: 'Vận dụng',
-    topic: 'Liên hệ bán kính nguyên tử và tính kim loại - phi kim',
-    question:
-      'Khi bán kính nguyên tử của các nguyên tố nhóm IA tăng dần từ Li đến Cs, khả năng nhường electron lớp ngoài cùng và tính kim loại biến đổi như thế nào?',
+    sectionCode: 'b',
+    topic: 'Giải thích bản chất biến đổi từ Li đến Ne',
+    question: 'Giải thích vì sao bán kính nguyên tử giảm dần từ Li đến Ne.',
     options: [
-      'Bán kính càng lớn, electron ngoài cùng liên kết với hạt nhân càng yếu nên càng dễ nhường electron, tính kim loại tăng dần',
-      'Bán kính càng lớn, lực hút hạt nhân càng mạnh nên càng khó nhường electron, tính kim loại giảm dần',
-      'Bán kính tăng nhưng tính kim loại không đổi vì đều có 1 electron lớp ngoài cùng',
-      'Bán kính tăng làm tính phi kim tăng dần từ Li đến Cs',
+      'Các nguyên tử mất dần lớp electron.',
+      'Số lớp electron giảm dần.',
+      'Điện tích hạt nhân tăng, trong khi electron được thêm vào cùng lớp chính nên lực hút hiệu dụng của hạt nhân tăng.',
+      'Số proton giảm còn số electron không đổi.',
     ],
-    correctIndex: 0,
+    correctIndex: 2,
     explanation:
-      'Trong nhóm IA từ Li đến Cs, bán kính nguyên tử tăng dần làm lực hút giữa hạt nhân với electron hóa trị 1s/ns¹ giảm, nguyên tử càng dễ nhường electron nên tính kim loại tăng dần.',
+      'Từ Li đến Ne (chu kì 2), điện tích hạt nhân tăng dần trong khi các electron mới chỉ được điền thêm vào cùng lớp electron thứ 2 (n = 2), làm lực hút hiệu dụng của hạt nhân lên lớp vỏ tăng nên bán kính giảm dần.',
   },
   {
     id: 15,
     level: 'Vận dụng',
-    topic: 'Xác định vị trí và so sánh tổng hợp',
+    sectionCode: 'b',
+    topic: 'Phản biện nhận định về bán kính của K và Na',
     question:
-      'Nguyên tố R có cấu hình electron lớp ngoài cùng là 4s¹ (biết các phân lớp bên trong đã bão hòa với Z = 19). So sánh bán kính của R với Ca (Z = 20), Na (Z = 11) và Mg (Z = 12):',
+      'Một học sinh cho rằng: “K có bán kính nhỏ hơn Na vì K có điện tích hạt nhân lớn hơn”. Nhận định nào phù hợp nhất?',
     options: [
-      'R(Mg) < R(Na) < R(Ca) < R(R)',
-      'R(Mg) < R(Ca) < R(Na) < R(R)',
-      'R(Ca) < R(R) < R(Mg) < R(Na)',
-      'R(R) > R(Ca) và R(R) > R(Na) > R(Mg)',
-    ],
-    correctIndex: 3,
-    explanation:
-      'R là Kali (K, Z = 19, chu kì 4, nhóm IA, bán kính 227 pm). K và Ca (Z = 20, 197 pm) cùng chu kì 4 nên R(K) > R(Ca). K và Na (Z = 11, 186 pm) cùng nhóm IA nên R(K) > R(Na). Na và Mg (Z = 12, 160 pm) cùng chu kì 3 nên R(Na) > R(Mg). Do đó R(K) lớn nhất, và R(K) > R(Na) > R(Mg).',
-  },
-  {
-    id: 16,
-    level: 'Vận dụng',
-    topic: 'So sánh bán kính nguyên tử và ion',
-    question:
-      'Khi nguyên tử kim loại Natri (Na, Z = 11) nhường 1 electron lớp ngoài cùng để tạo thành cation Na⁺, bán kính của ion Na⁺ so với nguyên tử Na thay đổi như thế nào?',
-    options: [
-      'R(Na⁺) < R(Na) vì ion Na⁺ giảm đi 1 lớp electron và lực hút hạt nhân lên các electron còn lại mạnh hơn',
-      'R(Na⁺) > R(Na) vì ion mang điện tích dương nên đẩy các lớp vỏ ra xa',
-      'R(Na⁺) = R(Na) vì điện tích hạt nhân Z = 11 không thay đổi',
-      'R(Na⁺) lớn gấp đôi R(Na)',
-    ],
-    correctIndex: 0,
-    explanation:
-      'Nguyên tử Na (2, 8, 1) có 3 lớp electron (R = 186 pm). Khi nhường 1e tạo Na⁺ (2, 8), số lớp electron giảm còn 2 lớp trong khi điện tích hạt nhân vẫn là +11, nên bán kính giảm mạnh xuống còn 102 pm: R(Na⁺) < R(Na).',
-  },
-  {
-    id: 17,
-    level: 'Vận dụng',
-    topic: 'Bán kính dãy ion đẳng electron',
-    question:
-      'Cho các hạt vi mô có cùng cấu hình electron 1s² 2s² 2p⁶ (đều có 10 electron): O²⁻ (Z = 8), F⁻ (Z = 9), Na⁺ (Z = 11), Mg²⁺ (Z = 12). Thứ tự bán kính giảm dần đúng là:',
-    options: [
-      'Mg²⁺ > Na⁺ > F⁻ > O²⁻',
-      'O²⁻ > F⁻ > Na⁺ > Mg²⁺',
-      'Na⁺ > Mg²⁺ > O²⁻ > F⁻',
-      'F⁻ > O²⁻ > Na⁺ > Mg²⁺',
+      'Đúng, vì điện tích hạt nhân luôn quyết định hoàn toàn bán kính.',
+      'Sai, vì K có thêm một lớp electron so với Na nên bán kính K lớn hơn.',
+      'Đúng, vì K có nhiều electron hơn.',
+      'Sai, vì Na có nhiều lớp electron hơn K.',
     ],
     correctIndex: 1,
     explanation:
-      'Với các ion có cùng số electron (10e, 2 lớp e), hạt nào có điện tích hạt nhân (+Z) càng lớn thì hút lớp vỏ electron càng mạnh làm bán kính càng nhỏ. Do Z tăng: 8 < 9 < 11 < 12 nên bán kính giảm dần: R(O²⁻) > R(F⁻) > R(Na⁺) > R(Mg²⁺).',
+      'Na (chu kì 3, 3 lớp e) và K (chu kì 4, 4 lớp e) cùng thuộc nhóm IA. Khi đi từ Na đến K, việc tăng thêm một lớp electron khiến electron ngoài cùng ở xa hạt nhân hơn, làm bán kính K lớn hơn Na.',
+  },
+
+  // ==================== c) VẬN DỤNG CAO (Câu 16 - 21) ====================
+  {
+    id: 16,
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'So sánh bán kính các nguyên tố khác chu kì và nhóm',
+    question:
+      'Nguyên tử X có Z = 12, nguyên tử Y có Z = 16 và nguyên tử T có Z = 19. Thứ tự bán kính nguyên tử giảm dần là',
+    options: ['Y > X > T.', 'X > T > Y.', 'T > X > Y.', 'T > Y > X.'],
+    correctIndex: 2,
+    explanation:
+      'X (Z = 12, Mg: chu kì 3, nhóm IIA), Y (Z = 16, S: chu kì 3, nhóm VIA), T (Z = 19, K: chu kì 4, nhóm IA). Trong chu kì 3: X > Y. Còn T ở đầu chu kì 4 (4 lớp e, nhóm IA) nên có bán kính lớn hơn X. Vậy thứ tự giảm dần là: T > X > Y.',
+  },
+  {
+    id: 17,
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'So sánh tổng quát hai nguyên tố nhóm IA và VIIA cùng chu kì',
+    question:
+      'Hai nguyên tố X và Y thuộc cùng chu kì. X nằm ở nhóm IA, Y nằm ở nhóm VIIA. Phát biểu nào đúng?',
+    options: [
+      'Bán kính Y lớn hơn X vì Y có nhiều electron hơn.',
+      'Bán kính X lớn hơn Y do bán kính nhìn chung giảm từ trái sang phải trong một chu kì.',
+      'Bán kính X bằng Y vì có cùng số lớp electron.',
+      'Không thể so sánh vì chưa biết chu kì cụ thể.',
+    ],
+    correctIndex: 1,
+    explanation:
+      'Trong cùng một chu kì, X ở nhóm IA (đứng đầu chu kì, bên trái) còn Y ở nhóm VIIA (bên phải). Do bán kính nguyên tử giảm dần từ trái sang phải trong một chu kì nên bán kính của X luôn lớn hơn Y.',
   },
   {
     id: 18,
-    level: 'Thông hiểu',
-    topic: 'Liên hệ bán kính với độ âm điện & tính kim loại - phi kim',
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'Xác định nguyên tố dựa vào quy luật bán kính trong chu kì 3',
     question:
-      'Trong một chu kì, khi đi từ trái sang phải theo chiều tăng điện tích hạt nhân, sự biến đổi nào sau đây là ĐÚNG khi liên hệ giữa bán kính nguyên tử, độ âm điện và tính kim loại - phi kim?',
+      'Một nguyên tố X thuộc chu kì 3 có bán kính nguyên tử lớn hơn Mg. X có thể là nguyên tố nào trong các nguyên tố sau?',
+    options: ['Al.', 'Si.', 'Na.', 'Cl.'],
+    correctIndex: 2,
+    explanation:
+      'Trong chu kì 3, bán kính nguyên tử giảm dần từ trái sang phải. Vì Na (Z = 11, nhóm IA) đứng trước Mg (Z = 12, nhóm IIA) nên Na có bán kính nguyên tử lớn hơn Mg (còn Al, Si, Cl đứng sau Mg nên có bán kính nhỏ hơn Mg).',
+  },
+  {
+    id: 19,
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'So sánh bán kính từ cấu hình electron lớp ngoài cùng',
+    question:
+      'Cho các nguyên tố có cấu hình electron lớp ngoài cùng: X: 2s¹; Y: 3s¹; Z: 3s²; T: 2p⁵. Thứ tự bán kính giảm dần nào phù hợp?',
     options: [
-      'Bán kính nguyên tử giảm dần → Độ âm điện tăng dần → Tính kim loại giảm dần, tính phi kim tăng dần',
-      'Bán kính nguyên tử giảm dần → Độ âm điện giảm dần → Tính kim loại tăng dần, tính phi kim giảm dần',
-      'Bán kính nguyên tử tăng dần → Độ âm điện tăng dần → Tính phi kim tăng dần',
-      'Bán kính nguyên tử giảm dần → Độ âm điện không đổi → Tính kim loại tăng dần',
+      'Y > Z > X > T.',
+      'Y > Z > T > X.',
+      'X > Y > Z > T.',
+      'T > Z > Y > X.',
     ],
     correctIndex: 0,
     explanation:
-      'Trong một chu kì (trái → phải): Bán kính nguyên tử giảm dần và điện tích hạt nhân tăng làm khả năng hút electron (độ âm điện) tăng dần → nguyên tử càng khó nhường e (tính kim loại giảm) và càng dễ nhận e (tính phi kim tăng).',
+      'X (2s¹: Li, chu kì 2, nhóm IA); Y (3s¹: Na, chu kì 3, nhóm IA); Z (3s²: Mg, chu kì 3, nhóm IIA); T (2p⁵: F, chu kì 2, nhóm VIIA). Cùng chu kì 3: Y > Z. Cùng chu kì 2: X > T. Vì Y, Z có 3 lớp e (nhóm IA, IIA) nên lớn hơn X, T (2 lớp e). Vậy thứ tự bán kính giảm dần là: Y > Z > X > T.',
+  },
+  {
+    id: 20,
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'Phản biện khoa học về các yếu tố quyết định bán kính nguyên tử',
+    question:
+      'Một học sinh kết luận: “Nguyên tử có nhiều electron hơn thì luôn có bán kính lớn hơn”. Cách phản biện nào chính xác nhất?',
+    options: [
+      'Đúng, vì electron quyết định toàn bộ kích thước nguyên tử.',
+      'Sai, vì bán kính chỉ phụ thuộc số neutron.',
+      'Sai, vì bán kính còn phụ thuộc số lớp electron và lực hút hiệu dụng của hạt nhân; trong cùng chu kì, nguyên tử nhiều electron hơn thường có bán kính nhỏ hơn.',
+      'Đúng, miễn là các nguyên tử trung hòa.',
+    ],
+    correctIndex: 2,
+    explanation:
+      'Kết luận trên là sai. Kích thước nguyên tử phụ thuộc vào cả số lớp electron và lực hút hiệu dụng của hạt nhân; trong cùng một chu kì từ trái sang phải, nguyên tử có nhiều electron hơn nhưng số lớp electron không đổi và điện tích hạt nhân tăng mạnh nên bán kính nguyên tử lại nhỏ hơn.',
+  },
+  {
+    id: 21,
+    level: 'Vận dụng cao',
+    sectionCode: 'c',
+    topic: 'So sánh bán kính 4 nguyên tố kim loại kiềm và kiềm thổ (Chu kì 3 & 4)',
+    question:
+      'Xét các nguyên tố Na (Z = 11), Mg (Z = 12), K (Z = 19), Ca (Z = 20). Thứ tự bán kính giảm dần nào phù hợp với quy luật tuần hoàn?',
+    options: [
+      'Na > Mg > K > Ca.',
+      'K > Ca > Na > Mg.',
+      'Ca > K > Mg > Na.',
+      'K > Na > Ca > Mg.',
+    ],
+    correctIndex: 1,
+    explanation:
+      'Ở chu kì 4 (4 lớp e): K (Z = 19, nhóm IA) > Ca (Z = 20, nhóm IIA). Ở chu kì 3 (3 lớp e): Na (Z = 11, nhóm IA) > Mg (Z = 12, nhóm IIA). Vì K, Ca có 4 lớp electron và thuộc nhóm kim loại đầu chu kì nên lớn hơn Na, Mg (3 lớp electron). Do đó thứ tự giảm dần là: K > Ca > Na > Mg (227 pm > 197 pm > 186 pm > 160 pm).',
+  },
+];
+
+/**
+ * PHẦN II. TRẮC NGHIỆM ĐÚNG / SAI (3,0 ĐIỂM)
+ * - Gồm 3 câu (mỗi câu có 4 ý a, b, c, d)
+ * - Điểm mỗi câu: Đúng 1 ý = 0,1đ; Đúng 2 ý = 0,25đ; Đúng 3 ý = 0,5đ; Đúng 4 ý = 1,0đ.
+ */
+export const TRUE_FALSE_QUESTIONS: TrueFalseQuestion[] = [
+  {
+    id: 1,
+    title: 'Câu 1 (Đúng / Sai)',
+    topic: 'Quy luật biến đổi bán kính nguyên tử trong bảng tuần hoàn',
+    stem: '1. Xét các phát biểu về sự biến đổi bán kính nguyên tử trong bảng tuần hoàn:',
+    statements: [
+      {
+        id: 'a',
+        text: 'Trong một chu kì, bán kính nguyên tử nhìn chung giảm dần từ trái sang phải.',
+        isTrue: true,
+        explanation:
+          'Đúng. Trong một chu kì, khi đi từ trái sang phải, điện tích hạt nhân tăng trong khi số lớp electron không đổi nên lực hút hạt nhân tăng, làm bán kính nguyên tử nhìn chung giảm dần.',
+      },
+      {
+        id: 'b',
+        text: 'Trong một nhóm A, bán kính nguyên tử nhìn chung giảm dần từ trên xuống dưới.',
+        isTrue: false,
+        explanation:
+          'Sai. Trong một nhóm A, khi đi từ trên xuống dưới, số lớp electron tăng dần nên bán kính nguyên tử nhìn chung tăng dần.',
+      },
+      {
+        id: 'c',
+        text: 'Các nguyên tử thuộc cùng một chu kì có cùng số lớp electron.',
+        isTrue: true,
+        explanation:
+          'Đúng. Các nguyên tố trong cùng một chu kì có số lớp electron bằng nhau và bằng số thứ tự của chu kì đó.',
+      },
+      {
+        id: 'd',
+        text: 'Điện tích hạt nhân tăng dần là một trong những nguyên nhân làm bán kính nguyên tử giảm trong một chu kì.',
+        isTrue: true,
+        explanation:
+          'Đúng. Điện tích hạt nhân tăng làm lực hút giữa hạt nhân và các electron lớp ngoài cùng mạnh hơn (khi số lớp electron không đổi), khiến bán kính nguyên tử giảm.',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Câu 2 (Đúng / Sai)',
+    topic: 'So sánh bán kính nguyên tử và số lớp electron của Na, Mg, Al, K',
+    stem: '2. Cho các nguyên tố Na (Z = 11), Mg (Z = 12), Al (Z = 13), K (Z = 19).',
+    statements: [
+      {
+        id: 'a',
+        text: 'Bán kính nguyên tử giảm dần theo thứ tự Na > Mg > Al.',
+        isTrue: true,
+        explanation:
+          'Đúng. Na, Mg, Al cùng thuộc chu kì 3; theo chiều điện tích hạt nhân tăng dần (11 < 12 < 13), bán kính nguyên tử giảm dần: Na > Mg > Al.',
+      },
+      {
+        id: 'b',
+        text: 'Bán kính nguyên tử của K nhỏ hơn bán kính nguyên tử của Na.',
+        isTrue: false,
+        explanation:
+          'Sai. Na (chu kì 3) và K (chu kì 4) cùng thuộc nhóm IA; đi từ trên xuống dưới bán kính tăng dần nên bán kính của K lớn hơn Na.',
+      },
+      {
+        id: 'c',
+        text: 'Nguyên tử K có nhiều lớp electron hơn nguyên tử Na.',
+        isTrue: true,
+        explanation:
+          'Đúng. Nguyên tử K (Z = 19, chu kì 4) có 4 lớp electron, nhiều hơn nguyên tử Na (Z = 11, chu kì 3) có 3 lớp electron.',
+      },
+      {
+        id: 'd',
+        text: 'Bán kính nguyên tử của Mg lớn hơn bán kính nguyên tử của K.',
+        isTrue: false,
+        explanation:
+          'Sai. Ta có K > Na > Mg nên bán kính nguyên tử của Mg (160 pm) nhỏ hơn bán kính nguyên tử của K (227 pm).',
+      },
+    ],
+  },
+  {
+    id: 3,
+    title: 'Câu 3 (Đúng / Sai)',
+    topic: 'Vận dụng so sánh bán kính ba nguyên tố X (Z = 9), Y (Z = 12), Z (Z = 19)',
+    stem: '3. Cho các nguyên tố X, Y, Z có số hiệu nguyên tử lần lượt là 9, 12, 19.',
+    statements: [
+      {
+        id: 'a',
+        text: 'Nguyên tử X có 2 lớp electron và thuộc chu kì 2.',
+        isTrue: true,
+        explanation:
+          'Đúng. Nguyên tố X (Z = 9, Fluorine: 1s²2s²2p⁵) có 2 lớp electron nên thuộc chu kì 2.',
+      },
+      {
+        id: 'b',
+        text: 'Bán kính nguyên tử tăng dần theo thứ tự X < Y < Z.',
+        isTrue: true,
+        explanation:
+          'Đúng. X (F, chu kì 2, nhóm VIIA, 2 lớp e) < Y (Mg, chu kì 3, nhóm IIA, 3 lớp e) < Z (K, chu kì 4, nhóm IA, 4 lớp e). Vậy thứ tự tăng dần là X < Y < Z.',
+      },
+      {
+        id: 'c',
+        text: 'Nguyên tử Y có bán kính lớn hơn nguyên tử Z vì Y có điện tích hạt nhân nhỏ hơn.',
+        isTrue: false,
+        explanation:
+          'Sai. Nguyên tử Z (K, Z = 19) có 4 lớp electron và nằm ở nhóm IA nên có bán kính lớn hơn nguyên tử Y (Mg, Z = 12, có 3 lớp electron).',
+      },
+      {
+        id: 'd',
+        text: 'Nguyên tử Z có bán kính lớn nhất trong ba nguyên tử X, Y, Z.',
+        isTrue: true,
+        explanation:
+          'Đúng. Vì thứ tự bán kính là X < Y < Z nên nguyên tử Z (K, 4 lớp electron, nhóm IA) có bán kính lớn nhất trong ba nguyên tử.',
+      },
+    ],
   },
 ];
