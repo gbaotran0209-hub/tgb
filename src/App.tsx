@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ELEMENT_BY_Z, ChemicalElement } from './data/elements';
+import { ChemicalElement } from './data/elements';
 import { PeriodicTableSection } from './components/PeriodicTableSection';
 import { AtomicRadiusTheorySection } from './components/AtomicRadiusTheorySection';
 import { StudentQuizSection, StudentProfile } from './components/StudentQuizSection';
@@ -17,9 +17,10 @@ const DARK_MODE_STORAGE_KEY = 'hoa10_dark_mode_v1';
 
 export default function App() {
   // Default on first open: ONLY show the Periodic Table ('table')
+  // And selectedElement is null by default so the detail panel only opens when clicking an element!
   const [activeTab, setActiveTab] = useState<MainModuleTab>('table');
   const [tableInitialMode, setTableInitialMode] = useState<'category' | 'radius_heatmap'>('category');
-  const [selectedElement, setSelectedElement] = useState<ChemicalElement>(ELEMENT_BY_Z[11]); // Sodium (Na)
+  const [selectedElement, setSelectedElement] = useState<ChemicalElement | null>(null);
   const [student, setStudent] = useState<StudentProfile | null>(null);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
@@ -45,10 +46,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Global Keyboard Shortcuts: Press 1, 2, or 3 to switch tabs rapidly
+  // Global Keyboard Shortcuts: Press 1, 2, or 3 to switch tabs rapidly, Esc to close element detail
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore shortcuts if user is typing in an input, textarea, select, or modifier key is pressed
       if (e.ctrlKey || e.altKey || e.metaKey) return;
       const target = e.target as HTMLElement | null;
       if (
@@ -70,6 +70,8 @@ export default function App() {
       } else if (e.key === '3') {
         e.preventDefault();
         handleSwitchTab('quiz');
+      } else if (e.key === 'Escape') {
+        setSelectedElement(null);
       }
     };
 
@@ -92,7 +94,7 @@ export default function App() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col chemistry-bg-pattern text-slate-900 ${
+      className={`min-h-screen flex flex-col chemistry-bg-pattern text-slate-900 overflow-x-hidden ${
         isDarkMode ? 'dark-theme' : ''
       }`}
     >
@@ -102,20 +104,22 @@ export default function App() {
         className="h-1.5 w-full bg-gradient-to-r from-sky-500 via-pink-500 to-amber-400"
       />
 
-      {/* Strict 3-Zone Top Bar Contract */}
+      {/* Responsive 3-Zone Top Bar */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4 sm:gap-8 px-4 sm:px-6 py-3.5">
-          {/* Zone 1: Single text element wordmark */}
+        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-2 sm:gap-6 px-3 sm:px-6 py-2.5 sm:py-3.5">
+          {/* Zone 1: Brand wordmark */}
           <button
             type="button"
             onClick={() => handleSwitchTab('table')}
-            className="font-display text-lg font-extrabold tracking-tight text-slate-900 whitespace-nowrap shrink-0 cursor-pointer text-left inline-flex items-center gap-2"
+            className="font-display text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 shrink-0 cursor-pointer text-left inline-flex items-center gap-1.5 sm:gap-2"
           >
-            <Atom className="w-5 h-5 text-sky-500" />
-            <span>Hóa Học 10 · Bảng Tuần Hoàn</span>
+            <Atom className="w-5 h-5 text-sky-500 shrink-0" />
+            <span className="truncate max-w-[155px] sm:max-w-none">
+              Hóa Học 10 · Bảng Tuần Hoàn
+            </span>
           </button>
 
-          {/* Zone 2: Clean single-line text navigation links with Keyboard Shortcut Hints */}
+          {/* Zone 2: Desktop single-line text navigation links with Keyboard Shortcut Hints */}
           <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-slate-600">
             <button
               type="button"
@@ -165,13 +169,13 @@ export default function App() {
           </nav>
 
           {/* Zone 3: Global Dark Mode Toggle + Primary Student Action */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <button
               type="button"
               onClick={() => setIsDarkMode((prev) => !prev)}
               title={isDarkMode ? 'Chuyển sang Giao diện Sáng' : 'Chuyển sang Giao diện Tối (Dark Mode)'}
               aria-label={isDarkMode ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
-              className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 border transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center gap-1.5 border transition-all cursor-pointer ${
                 isDarkMode
                   ? 'bg-slate-800 border-sky-400/70 text-amber-300 hover:bg-slate-700 shadow-sm shadow-sky-500/10'
                   : 'bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200'
@@ -179,13 +183,15 @@ export default function App() {
             >
               {isDarkMode ? (
                 <>
-                  <Sun className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Chế độ Sáng</span>
+                  <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span className="hidden sm:inline">Chế độ Sáng</span>
+                  <span className="sm:hidden">Sáng</span>
                 </>
               ) : (
                 <>
-                  <Moon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Dark Mode</span>
+                  <Moon className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span className="hidden sm:inline">Dark Mode</span>
+                  <span className="sm:hidden">Tối</span>
                 </>
               )}
             </button>
@@ -193,20 +199,82 @@ export default function App() {
             <button
               type="button"
               onClick={() => handleSwitchTab('quiz')}
-              className="element-tile-shimmer px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 border border-sky-500/30 rounded-xl hover:from-sky-900 hover:to-slate-900 transition-all whitespace-nowrap shrink-0 cursor-pointer shadow-sm"
+              className="element-tile-shimmer px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold text-white bg-gradient-to-r from-slate-900 via-slate-800 to-sky-950 border border-sky-500/30 rounded-xl hover:from-sky-900 hover:to-slate-900 transition-all shrink-0 cursor-pointer shadow-sm"
             >
-              {student
-                ? `Học sinh: ${student.fullName} (${student.className})`
-                : 'Đăng nhập Học sinh & Làm bài'}
+              {student ? (
+                <>
+                  <span className="hidden sm:inline">
+                    Học sinh: {student.fullName} ({student.className})
+                  </span>
+                  <span className="sm:hidden">{student.fullName}</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Đăng nhập Học sinh & Làm bài</span>
+                  <span className="sm:hidden">Làm bài tập</span>
+                </>
+              )}
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content Container */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Big Interactive Module Switcher ("Các mục lớn" để bấm chuyển qua lại hoặc bấm phím 1, 2, 3) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <main className="flex-1 max-w-[1440px] w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {/* Mobile Quick Module Bar (Compact 3-column tab bar on phones < 768px) */}
+        <div className="grid grid-cols-3 gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => handleSwitchTab('table')}
+            className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+              activeTab === 'table'
+                ? 'bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 text-white border-sky-400 shadow-sm'
+                : 'bg-white/95 text-slate-900 border-slate-200'
+            }`}
+          >
+            <Grid className={`w-4 h-4 ${activeTab === 'table' ? 'text-sky-300' : 'text-sky-600'}`} />
+            <span className="font-display text-xs font-extrabold leading-tight">
+              1. Bảng tuần hoàn
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSwitchTab('radius')}
+            className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+              activeTab === 'radius'
+                ? 'bg-gradient-to-br from-slate-900 via-rose-950 to-slate-900 text-white border-pink-400 shadow-sm'
+                : 'bg-white/95 text-slate-900 border-slate-200'
+            }`}
+          >
+            <Compass
+              className={`w-4 h-4 ${activeTab === 'radius' ? 'text-pink-300' : 'text-rose-600'}`}
+            />
+            <span className="font-display text-xs font-extrabold leading-tight">
+              2. Lý thuyết
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSwitchTab('quiz')}
+            className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+              activeTab === 'quiz'
+                ? 'bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 text-white border-amber-400 shadow-sm'
+                : 'bg-white/95 text-slate-900 border-slate-200'
+            }`}
+          >
+            <Trophy
+              className={`w-4 h-4 ${activeTab === 'quiz' ? 'text-amber-300' : 'text-amber-600'}`}
+            />
+            <span className="font-display text-xs font-extrabold leading-tight">
+              3. Bài tập
+            </span>
+          </button>
+        </div>
+
+        {/* Desktop & Tablet Interactive Module Switcher (md and up) */}
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
           {/* Mục 1: Bảng Tuần Hoàn */}
           <button
             type="button"
@@ -257,7 +325,7 @@ export default function App() {
                   activeTab === 'table' ? 'text-slate-300' : 'text-slate-500'
                 }`}
               >
-                7 chu kì, 18 cột, màu chuẩn SGK (Xanh – Hồng – Vàng), đường ziczac, Mô hình đám mây 3D & So sánh 2 nguyên tố.
+                7 chu kì, 18 cột, màu chuẩn SGK (Xanh – Hồng – Vàng), đường ziczac, bấm vào nguyên tố để xem Mô hình 3D.
               </p>
             </div>
           </button>
@@ -305,14 +373,14 @@ export default function App() {
                   activeTab === 'radius' ? 'text-white' : 'text-slate-900'
                 }`}
               >
-                Quy Luật Bán Kính Nguyên Tử
+                Nội Dung Lý Thuyết Trọng Tâm Hóa 10
               </div>
               <p
                 className={`text-xs leading-relaxed ${
                   activeTab === 'radius' ? 'text-slate-300' : 'text-slate-500'
                 }`}
               >
-                Khái niệm · Biến đổi · Giải thích · Máy so sánh · Phòng thí nghiệm Nguyên tử & Ion · Liên hệ Độ âm điện.
+                I. Sơ lược Bảng tuần hoàn (Nguyên tắc, Ô, Chu kì, Nhóm A/B) · II. Bán kính nguyên tử &amp; Năng lượng ion hóa I₁.
               </p>
             </div>
           </button>
@@ -427,13 +495,29 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Quiet Footer */}
-      <footer className="border-t border-slate-200 bg-white/90 backdrop-blur mt-12">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      {/* Quiet Responsive Footer */}
+      <footer className="border-t border-slate-200 bg-white/90 backdrop-blur mt-8 sm:mt-12">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 text-center sm:text-left">
           <div>
-            Học liệu tương tác Hóa học 10 · Mẹo nhanh: Bấm phím <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">1</kbd>, <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">2</kbd>, <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">3</kbd> trên bàn phím để chuyển nhanh giữa 3 chuyên mục.
+            Học liệu tương tác Hóa học 10 ·{' '}
+            <span className="hidden sm:inline">
+              Mẹo nhanh: Bấm phím{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">
+                1
+              </kbd>
+              ,{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">
+                2
+              </kbd>
+              ,{' '}
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">
+                3
+              </kbd>{' '}
+              trên bàn phím để chuyển nhanh giữa 3 chuyên mục.
+            </span>
+            <span className="sm:hidden">Tương thích Điện thoại, Máy tính bảng & Máy tính.</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => handleSwitchTab('table')}

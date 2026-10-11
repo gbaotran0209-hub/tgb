@@ -629,7 +629,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
                   <div>
                     <span className="text-slate-500 block">Tiến độ</span>
                     <span className="font-mono text-sm font-extrabold text-slate-900 tabular-nums">

@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ELEMENTS,
@@ -19,13 +20,16 @@ import {
   Scale,
   Sparkles,
   Layers,
+  X,
+  Smartphone,
+  BookOpen,
 } from 'lucide-react';
 import { ElementDualComparison } from './ElementDualComparison';
 import { Atom3DCanvas } from './Atom3DCanvas';
 
 interface PeriodicTableSectionProps {
-  selectedElement: ChemicalElement;
-  onSelectElement: (el: ChemicalElement) => void;
+  selectedElement: ChemicalElement | null;
+  onSelectElement: (el: ChemicalElement | null) => void;
   onNavigateTab?: (tab: 'table' | 'radius' | 'quiz') => void;
   initialColorMode?: 'category' | 'block_spdf' | 'radius_heatmap';
   isDarkMode?: boolean;
@@ -95,6 +99,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
   const [showDualCompare, setShowDualCompare] = useState<boolean>(true);
   const [compareElementA, setCompareElementA] = useState<ChemicalElement>(ELEMENT_BY_Z[11]); // Na
   const [compareElementB, setCompareElementB] = useState<ChemicalElement>(ELEMENT_BY_Z[17]); // Cl
+  const [isCompactMobileTable, setIsCompactMobileTable] = useState<boolean>(false);
 
   const mainGridMap = useMemo(() => {
     const map = new Map<string, ChemicalElement>();
@@ -116,6 +121,21 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
     []
   );
 
+  useEffect(() => {
+    if (selectedElement) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedElement]);
+
+  const handleElementClick = (el: ChemicalElement) => {
+    onSelectElement(el);
+  };
+
   const isElementMatched = (el: ChemicalElement): boolean => {
     if (filterMode === 'metal' && el.category !== 'metal') return false;
     if (filterMode === 'nonmetal' && el.category !== 'nonmetal') return false;
@@ -130,13 +150,6 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
       const matchName = el.name.toLowerCase().includes(q);
       const matchVi = el.vietnameseName.toLowerCase().includes(q);
       if (!matchZ && !matchSym && !matchName && !matchVi) return false;
-    }
-
-    if (highlightPeriodOrGroup === 'period' && el.period !== selectedElement.period) {
-      return false;
-    }
-    if (highlightPeriodOrGroup === 'group' && el.groupRoman !== selectedElement.groupRoman) {
-      return false;
     }
 
     return true;
@@ -160,9 +173,9 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
 
     const selectedRing = isSelected
       ? isDarkMode
-        ? 'ring-2 ring-white selected-element-pulse z-20 scale-[1.11] -translate-y-1'
-        : 'ring-2 ring-slate-950 selected-element-pulse z-20 scale-[1.11] -translate-y-1'
-      : 'hover:scale-[1.16] hover:-translate-y-1.5 hover:shadow-xl hover:z-30 active:scale-[1.04]';
+        ? 'ring-2 ring-white selected-element-pulse z-20 scale-[1.09] -translate-y-0.5'
+        : 'ring-2 ring-slate-950 selected-element-pulse z-20 scale-[1.09] -translate-y-0.5'
+      : 'hover:scale-[1.12] sm:hover:scale-[1.16] hover:-translate-y-1 hover:shadow-xl hover:z-30 active:scale-[1.03]';
 
     // SGK Staircase border accent between Metals and Nonmetals (B, Si, As, Te, At)
     const staircaseBorder =
@@ -185,10 +198,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         return `${darkCatStyles[el.category]} ${staircaseBorder} ${crosshairBoost} ${selectedRing} ${dimmed}`;
       }
 
-      // Chuẩn màu SGK Hóa học 10 (Light Mode):
-      // - Kim loại: Xanh dương (Sky / Blue)
-      // - Phi kim: Hồng phấn / Đỏ hồng (Pink / Rose)
-      // - Khí hiếm: Vàng cam (Amber / Golden Yellow)
+      // Chuẩn màu SGK Hóa học 10 (Light Mode)
       const catStyles: Record<ElementCategory, string> = {
         metal:
           'bg-gradient-to-br from-[#dff2fe] via-[#bae6fd] to-[#93c5fd]/85 border-sky-400 text-slate-950 hover:border-sky-600 hover:shadow-sky-500/40 hover:from-[#e0f2fe] hover:to-[#7dd3fc]',
@@ -211,7 +221,6 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         return `${darkBlockStyles[el.block]} ${crosshairBoost} ${selectedRing} ${dimmed}`;
       }
 
-      // Chuẩn màu SGK Hóa học 10 theo 4 họ nguyên tố s, p, d, f:
       const blockStyles: Record<ElementBlock, string> = {
         s: 'bg-gradient-to-br from-sky-100 via-sky-200/90 to-cyan-200 border-sky-400 text-slate-950 hover:border-sky-600 hover:shadow-sky-500/35',
         p: 'bg-gradient-to-br from-amber-100 via-yellow-200/90 to-orange-200/80 border-amber-400 text-slate-950 hover:border-amber-600 hover:shadow-amber-500/35',
@@ -274,7 +283,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
   };
 
   const renderElementCell = (el: ChemicalElement) => {
-    const isSelected = el.atomicNumber === selectedElement.atomicNumber;
+    const isSelected = selectedElement?.atomicNumber === el.atomicNumber;
     const isMatched = isElementMatched(el);
     const isDarkCell =
       isDarkMode || (colorMode === 'radius_heatmap' && (el.atomicRadius ?? 0) >= 150);
@@ -303,17 +312,15 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
       <button
         key={el.atomicNumber}
         type="button"
-        onClick={() => onSelectElement(el)}
+        onClick={() => handleElementClick(el)}
         onMouseEnter={() => setHoveredElement(el)}
         onMouseLeave={() => setHoveredElement(null)}
         title={`Ô ${el.atomicNumber}: ${el.name} (${el.vietnameseName}) - Chu kì ${el.period}, Nhóm ${el.groupRoman} (Nhóm ${el.groupType})`}
-        className={`element-tile-shimmer group relative flex flex-col justify-between p-1.5 rounded-lg border text-left transition-all duration-200 ease-out will-change-transform select-none min-h-[66px] cursor-pointer ${getCellStyle(
-          el,
-          isSelected,
-          isMatched
-        )}`}
+        className={`element-tile-shimmer group relative flex flex-col justify-between p-1 sm:p-1.5 rounded-lg border text-left transition-all duration-200 ease-out will-change-transform select-none cursor-pointer ${
+          isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'
+        } ${getCellStyle(el, isSelected, isMatched)}`}
       >
-        {/* Active Selected Corner Sparkle Indicator */}
+        {/* Active Selected Corner Indicator */}
         {isSelected && (
           <span
             aria-hidden="true"
@@ -324,7 +331,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         {/* Top row: Atomic Number + Group Type or Block or Radius pm */}
         <div className="flex items-center justify-between w-full leading-none">
           <span
-            className={`font-mono text-[10px] font-extrabold tabular-nums ${
+            className={`font-mono text-[9px] sm:text-[10px] font-extrabold tabular-nums ${
               isDarkCell ? 'text-slate-200' : 'text-slate-800'
             }`}
           >
@@ -332,7 +339,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
           </span>
           {colorMode === 'radius_heatmap' ? (
             <span
-              className={`font-mono text-[9px] tabular-nums ${
+              className={`font-mono text-[8px] sm:text-[9px] tabular-nums ${
                 isDarkCell ? 'text-indigo-100' : 'text-indigo-800 font-semibold'
               }`}
             >
@@ -350,7 +357,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
             </span>
           ) : (
             <span
-              className={`text-[8px] font-mono font-bold uppercase tracking-tighter ${
+              className={`text-[7px] sm:text-[8px] font-mono font-bold uppercase tracking-tighter ${
                 isDarkMode
                   ? 'text-slate-300'
                   : el.category === 'metal'
@@ -368,7 +375,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         {/* Middle: Chemical Symbol + Scaled Circle in Heatmap Mode */}
         <div className="flex items-baseline justify-between my-0.5">
           <span
-            className={`font-display text-sm sm:text-base font-extrabold tracking-tight leading-none transition-transform duration-200 group-hover:scale-105 ${symbolColorClass}`}
+            className={`font-display text-xs sm:text-base font-extrabold tracking-tight leading-none transition-transform duration-200 group-hover:scale-105 ${symbolColorClass}`}
           >
             {el.symbol}
           </span>
@@ -391,306 +398,54 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         {/* Bottom: Element Name & Electron Config */}
         <div className="w-full overflow-hidden">
           <div
-            className={`text-[9px] font-bold truncate leading-tight ${
+            className={`text-[8px] sm:text-[9px] font-bold truncate leading-tight ${
               isDarkCell ? 'text-white' : 'text-slate-900'
             }`}
           >
             {el.vietnameseName}
           </div>
-          <div
-            className={`font-mono text-[8px] truncate leading-tight mt-0.5 ${
-              isDarkCell ? 'text-slate-300' : 'text-slate-700/90'
-            }`}
-          >
-            {el.electronConfig}
-          </div>
+          {!isCompactMobileTable && (
+            <div
+              className={`hidden sm:block font-mono text-[8px] truncate leading-tight mt-0.5 ${
+                isDarkCell ? 'text-slate-300' : 'text-slate-700/90'
+              }`}
+            >
+              {el.electronConfig}
+            </div>
+          )}
         </div>
       </button>
     );
   };
 
+  const gridTemplateStyle = isCompactMobileTable
+    ? { gridTemplateColumns: '36px repeat(18, minmax(33px, 1fr))' }
+    : { gridTemplateColumns: '46px repeat(18, minmax(52px, 1fr))' };
+
+  const gridMinWidthClass = isCompactMobileTable
+    ? 'min-w-[660px] lg:min-w-[1140px]'
+    : 'min-w-[980px] lg:min-w-[1140px]';
+
   return (
-    <div className="space-y-6">
-      {/* Selected Element Interactive Spotlight Stage (Animated with motion/react) */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={selectedElement.atomicNumber}
-          initial={{ opacity: 0, y: 8, scale: 0.995 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -8, scale: 0.995 }}
-          transition={{ duration: 0.22, ease: 'easeOut' }}
-          className="relative overflow-hidden bg-white border-2 border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-md"
-        >
-          {/* Decorative Ambient SGK Color Glow in Top-Left Corner */}
-          <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl opacity-35 ${
-              selectedElement.category === 'metal'
-                ? 'bg-sky-400'
-                : selectedElement.category === 'nonmetal'
-                ? 'bg-pink-400'
-                : 'bg-amber-400'
-            }`}
-          />
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* Left 7 Cols: Exact Position Breakdown (Ô, Chu kì, Nhóm A/B) */}
-            <div className="lg:col-span-7 flex flex-col justify-between space-y-5">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="flex items-center gap-4">
-                  {/* Vivid SGK-Colored Collector Element Tile Badge */}
-                  <motion.div
-                    initial={{ rotate: -4, scale: 0.9 }}
-                    animate={{ rotate: 0, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-                    className={`element-tile-shimmer w-22 h-22 rounded-2xl border-2 flex flex-col items-center justify-center shrink-0 shadow-md ${
-                      isDarkMode
-                        ? selectedElement.category === 'metal'
-                          ? 'bg-gradient-to-br from-sky-900 via-sky-950 to-blue-950 border-sky-400 text-sky-200 shadow-sky-500/30'
-                          : selectedElement.category === 'nonmetal'
-                          ? 'bg-gradient-to-br from-rose-900 via-pink-950 to-rose-950 border-pink-400 text-pink-200 shadow-pink-500/30'
-                          : 'bg-gradient-to-br from-amber-900 via-amber-950 to-yellow-950 border-amber-400 text-amber-200 shadow-amber-500/30'
-                        : selectedElement.category === 'metal'
-                        ? 'bg-gradient-to-br from-[#dff2fe] via-[#bae6fd] to-[#7dd3fc] border-sky-500 text-sky-950 shadow-sky-500/20'
-                        : selectedElement.category === 'nonmetal'
-                        ? 'bg-gradient-to-br from-[#fce7f3] via-[#fbcfe8] to-[#f472b6] border-rose-500 text-rose-950 shadow-rose-500/20'
-                        : 'bg-gradient-to-br from-[#fef3c7] via-[#fde68a] to-[#fbbf24] border-amber-500 text-amber-950 shadow-amber-500/20'
-                    }`}
-                  >
-                    <span className="font-mono text-xs font-extrabold opacity-90 leading-none">
-                      Z = {selectedElement.atomicNumber}
-                    </span>
-                    <span className="font-display text-3xl font-extrabold tracking-tight mt-0.5">
-                      {selectedElement.symbol}
-                    </span>
-                    <span className="text-[10px] font-bold opacity-90 leading-none mt-0.5">
-                      M = {selectedElement.atomicMass}
-                    </span>
-                  </motion.div>
-
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
-                      <span
-                        className={`font-extrabold ${
-                          selectedElement.category === 'metal'
-                            ? 'text-sky-700'
-                            : selectedElement.category === 'nonmetal'
-                            ? 'text-rose-700'
-                            : 'text-amber-700'
-                        }`}
-                      >
-                        {categoryLabel(selectedElement.category)} (Màu chuẩn SGK)
-                      </span>
-                      <span aria-hidden="true">·</span>
-                      <span>{selectedElement.subCategory}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="text-indigo-700 font-bold">
-                        Nguyên tố họ {selectedElement.block}
-                      </span>
-                    </div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 mt-0.5">
-                      {selectedElement.name}{' '}
-                      <span className="text-slate-500 font-semibold">
-                        ({selectedElement.vietnameseName})
-                      </span>
-                    </h2>
-                    <p className="text-xs text-slate-600 mt-1 font-mono">
-                      Cấu hình electron:{' '}
-                      <strong className="text-slate-950">{selectedElement.fullElectronConfig}</strong>{' '}
-                      {selectedElement.electronConfig !== selectedElement.fullElectronConfig && (
-                        <span className="text-sky-700 font-semibold">
-                          (Rút gọn: {selectedElement.electronConfig})
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Highlight toggle for current period / group & Assign to Dual Comparison */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setHighlightPeriodOrGroup(
-                          highlightPeriodOrGroup === 'period' ? 'none' : 'period'
-                        )
-                      }
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        highlightPeriodOrGroup === 'period'
-                          ? 'bg-slate-900 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Soi Chu kì {selectedElement.period}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setHighlightPeriodOrGroup(
-                          highlightPeriodOrGroup === 'group' ? 'none' : 'group'
-                        )
-                      }
-                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        highlightPeriodOrGroup === 'group'
-                          ? 'bg-slate-900 text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Soi Nhóm {selectedElement.groupRoman}
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1 bg-sky-50 border border-sky-200 p-1 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCompareElementA(selectedElement);
-                        setShowDualCompare(true);
-                        const el = document.getElementById('dual-element-comparison');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                      }}
-                      className="px-2.5 py-1 text-xs font-bold text-sky-800 hover:bg-sky-100 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      So sánh: Đặt {selectedElement.symbol} làm A
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCompareElementB(selectedElement);
-                        setShowDualCompare(true);
-                        const el = document.getElementById('dual-element-comparison');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                      }}
-                      className="px-2.5 py-1 text-xs font-bold text-indigo-800 hover:bg-indigo-100 rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                    >
-                      Đặt {selectedElement.symbol} làm B
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3 Core Position Pillars required by prompt: Số thứ tự ô, Chu kì, Nhóm (ghi rõ nhóm A hay B) */}
-              <div>
-                <div className="text-xs font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
-                  <Compass className="w-4 h-4 text-sky-600" />
-                  <span>
-                    Vị trí chính xác của nguyên tố {selectedElement.symbol} trong Bảng tuần hoàn:
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  {/* 1. Số thứ tự ô */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-100/80 border border-slate-200/90 shadow-2xs">
-                    <div className="text-xs font-semibold text-slate-500">1. Số thứ tự ô nguyên tố</div>
-                    <div className="font-display text-2xl font-extrabold text-slate-900 mt-1 tabular-nums">
-                      Ô số {selectedElement.atomicNumber}
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                      Số hiệu nguyên tử{' '}
-                      <span className="font-mono font-bold text-slate-900">
-                        Z = {selectedElement.atomicNumber}
-                      </span>{' '}
-                      ({selectedElement.atomicNumber}p, {selectedElement.atomicNumber}e).
-                    </p>
-                  </div>
-
-                  {/* 2. Chu kì */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-sky-50/90 via-white to-sky-100/60 border border-sky-200 shadow-2xs">
-                    <div className="text-xs font-semibold text-sky-800">2. Chu kì (Hàng ngang)</div>
-                    <div className="font-display text-2xl font-extrabold text-sky-950 mt-1 tabular-nums">
-                      Chu kì {selectedElement.period}
-                    </div>
-                    <p className="text-xs text-sky-900/85 mt-1.5 leading-relaxed">
-                      Nguyên tử có{' '}
-                      <strong className="text-sky-950">
-                        {selectedElement.shells.length} lớp electron
-                      </strong>{' '}
-                      ({selectedElement.shells.join(' · ')}).
-                    </p>
-                  </div>
-
-                  {/* 3. Nhóm (Ghi rõ Nhóm A hay B) */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50/70 via-white to-amber-50/60 border border-rose-200/90 shadow-2xs">
-                    <div className="text-xs font-semibold text-rose-800">3. Nhóm (Cột dọc)</div>
-                    <div className="font-display text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">
-                      Nhóm {selectedElement.groupRoman}{' '}
-                      <span className="text-sm font-extrabold text-rose-700">
-                        (Nhóm {selectedElement.groupType})
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-700 mt-1.5 leading-relaxed">
-                      Thuộc <strong>Nhóm {selectedElement.groupType}</strong> (Cột {selectedElement.column}) · Họ{' '}
-                      <strong>{selectedElement.block}</strong>
-                      {selectedElement.fBlockRow
-                        ? ` (${selectedElement.fBlockRow === 'lanthanide' ? 'Lanthanide' : 'Actinide'})`
-                        : `, có ${selectedElement.valenceElectrons}e lớp ngoài cùng`}
-                      .
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fun Chemistry Note & Key Metrics */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-50 via-sky-50/40 to-rose-50/30 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="text-xs text-slate-700 leading-relaxed flex-1">
-                  <strong className="text-slate-900">Đặc điểm & Ứng dụng thú vị: </strong>
-                  {getElementFunFact(selectedElement)}
-                </div>
-                <div className="flex items-center gap-4 shrink-0 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4 text-xs">
-                  <div>
-                    <span className="text-slate-500 block">Bán kính nguyên tử</span>
-                    <span className="font-mono text-sm font-extrabold text-indigo-700 tabular-nums">
-                      {selectedElement.atomicRadius ? `${selectedElement.atomicRadius} pm` : '—'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">Độ âm điện</span>
-                    <span className="font-mono text-sm font-extrabold text-rose-700 tabular-nums">
-                      {selectedElement.electronegativity !== null
-                        ? selectedElement.electronegativity.toFixed(2)
-                        : 'Khí hiếm'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right 5 Cols: Interactive 3D Canvas Atom Model */}
-            <Atom3DCanvas element={selectedElement} />
-          </div>
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Dual Element Side-by-Side Comparison Section */}
-      {showDualCompare && (
-        <div id="dual-element-comparison">
-          <ElementDualComparison
-            elementA={compareElementA}
-            elementB={compareElementB}
-            onChangeElementA={setCompareElementA}
-            onChangeElementB={setCompareElementB}
-          />
-        </div>
-      )}
-
-      {/* Quick Spotlight Bar + View Mode + Filter Controls */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 space-y-4 shadow-xs">
+    <div className="space-y-5 sm:space-y-6">
+      {/* 1. Control Bar: Quick Spotlight + Color Mode + Filter + Search + SGK Legend */}
+      <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-4 shadow-xs">
         {/* Quick Spotlight Famous Elements */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-xs font-bold text-slate-700 mr-1 inline-flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Chọn nhanh nguyên tố tiêu biểu:</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Bấm chọn nhanh nguyên tố:</span>
             </span>
             {QUICK_SPOTLIGHT_Z.map((z) => {
               const el = ELEMENT_BY_Z[z];
-              const active = selectedElement.atomicNumber === z;
+              const active = selectedElement?.atomicNumber === z;
               return (
                 <button
                   key={z}
                   type="button"
-                  onClick={() => onSelectElement(el)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                  onClick={() => handleElementClick(el)}
+                  className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer ${
                     active
                       ? 'bg-slate-900 text-white shadow-xs scale-105'
                       : el.category === 'metal'
@@ -704,77 +459,76 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowDualCompare(!showDualCompare)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer ${
-                showDualCompare
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100'
-              }`}
-            >
-              <Scale className="w-3.5 h-3.5" />
-              <span>
-                {showDualCompare
-                  ? `Đang mở Bảng so sánh (${compareElementA.symbol} vs ${compareElementB.symbol})`
-                  : 'Mở Bảng so sánh 2 nguyên tố'}
-              </span>
-            </button>
-
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {onNavigateTab && (
               <button
                 type="button"
                 onClick={() => onNavigateTab('radius')}
-                className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 inline-flex items-center gap-1 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 hover:bg-indigo-100 transition-colors cursor-pointer"
               >
-                <span>Xem bài học Quy luật Bán kính nguyên tử</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                <span>Nội dung Lý thuyết trọng tâm (Mục 2)</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0" />
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowDualCompare(true);
+                setTimeout(() => {
+                  const cmpEl = document.getElementById('dual-element-comparison');
+                  if (cmpEl) cmpEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 transition-colors cursor-pointer"
+            >
+              <Scale className="w-3.5 h-3.5 shrink-0" />
+              <span>So sánh ({compareElementA.symbol} vs {compareElementB.symbol})</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           {/* Mode Switcher */}
           <div className="space-y-1.5">
             <span className="text-xs font-bold text-slate-700 block">
               Chế độ bảng màu chuẩn SGK Hóa học 10
             </span>
-            <div className="inline-flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-xl">
+            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
                 onClick={() => setColorMode('category')}
-                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer text-left ${
                   colorMode === 'category'
                     ? 'bg-white text-slate-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Chuẩn SGK: Kim loại (Xanh) · Phi kim (Hồng) · Khí hiếm (Vàng)
+                Chuẩn SGK: Kim loại · Phi kim · Khí hiếm
               </button>
               <button
                 type="button"
                 onClick={() => setColorMode('block_spdf')}
-                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1 ${
+                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 ${
                   colorMode === 'block_spdf'
                     ? 'bg-white text-slate-950 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-sky-600" />
-                <span>Chuẩn SGK: Họ s · p · d · f</span>
+                <Layers className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                <span>Họ s · p · d · f</span>
               </button>
               <button
                 type="button"
                 onClick={() => setColorMode('radius_heatmap')}
-                className={`px-3 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer ${
                   colorMode === 'radius_heatmap'
                     ? 'bg-indigo-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Bản đồ nhiệt Bán kính (Đậm – Nhạt)
+                Bản đồ nhiệt Bán kính
               </button>
             </div>
           </div>
@@ -791,15 +545,15 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                   { id: 'metal', label: 'Kim loại (92)' },
                   { id: 'nonmetal', label: 'Phi kim (19)' },
                   { id: 'noble_gas', label: 'Khí hiếm (7)' },
-                  { id: 'groupA', label: 'Nhóm A (s, p)' },
-                  { id: 'groupB', label: 'Nhóm B (d, f)' },
+                  { id: 'groupA', label: 'Nhóm A' },
+                  { id: 'groupB', label: 'Nhóm B' },
                 ] as { id: FilterMode; label: string }[]
               ).map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setFilterMode(tab.id)}
-                  className={`px-3 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                     filterMode === tab.id
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -812,7 +566,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
           </div>
 
           {/* Search box */}
-          <div className="space-y-1.5 min-w-[230px]">
+          <div className="space-y-1.5 w-full xl:w-64">
             <label htmlFor="element-search" className="text-xs font-bold text-slate-700 block">
               Tìm kiếm nguyên tố (Z, kí hiệu, tên)
             </label>
@@ -824,7 +578,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="VD: 26, Fe, Sắt, Natri, Au..."
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors"
+                className="w-full pl-9 pr-12 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-colors"
               />
               {searchQuery && (
                 <button
@@ -843,25 +597,25 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-xs">
           {colorMode === 'category' ? (
             <div className="space-y-2.5 w-full">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3 w-full">
                 <button
                   type="button"
                   onClick={() => setFilterMode(filterMode === 'metal' ? 'all' : 'metal')}
-                  className={`flex items-center gap-3 p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                  className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
                     filterMode === 'metal'
                       ? 'bg-[#bae6fd] border-sky-600 shadow-sm'
                       : 'bg-[#e0f2fe]/85 border-sky-300 hover:bg-[#bae6fd]/70'
                   }`}
                 >
-                  <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Zap className="w-4 h-4" />
                   </span>
                   <div>
-                    <div className="font-extrabold text-sky-950">
-                      Màu Xanh Dương SGK · Kim loại (92 nguyên tố)
+                    <div className="font-extrabold text-sky-950 text-xs">
+                      Màu Xanh Dương SGK · Kim loại (92)
                     </div>
                     <div className="text-[11px] text-sky-900/85">
-                      Nhóm IA (trừ H), IIA, IIIA (trừ B), toàn bộ nhóm B và 2 họ Lanthanide / Actinide
+                      Nhóm IA (trừ H), IIA, IIIA (trừ B), toàn bộ nhóm B & Lanthanide / Actinide
                     </div>
                   </div>
                 </button>
@@ -869,21 +623,21 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setFilterMode(filterMode === 'nonmetal' ? 'all' : 'nonmetal')}
-                  className={`flex items-center gap-3 p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                  className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
                     filterMode === 'nonmetal'
                       ? 'bg-[#fbcfe8] border-rose-600 shadow-sm'
                       : 'bg-[#fce7f3]/90 border-pink-300 hover:bg-[#fbcfe8]/75'
                   }`}
                 >
-                  <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Flame className="w-4 h-4" />
                   </span>
                   <div>
-                    <div className="font-extrabold text-rose-950">
-                      Màu Hồng Phấn SGK · Phi kim (19 nguyên tố)
+                    <div className="font-extrabold text-rose-950 text-xs">
+                      Màu Hồng Phấn SGK · Phi kim (19)
                     </div>
                     <div className="text-[11px] text-rose-900/85">
-                      Nằm phía trên bên phải đường bậc thang ziczac đỏ (Nhóm VA, VIA, VIIA + H, B, C, Si)
+                      Phía trên bên phải đường ziczac đỏ (Nhóm VA, VIA, VIIA + H, B, C, Si)
                     </div>
                   </div>
                 </button>
@@ -891,36 +645,36 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setFilterMode(filterMode === 'noble_gas' ? 'all' : 'noble_gas')}
-                  className={`flex items-center gap-3 p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
+                  className={`flex items-center gap-3 p-2.5 sm:p-3 rounded-2xl border-2 text-left transition-all cursor-pointer ${
                     filterMode === 'noble_gas'
                       ? 'bg-[#fde68a] border-amber-600 shadow-sm'
                       : 'bg-[#fef3c7]/90 border-amber-300 hover:bg-[#fde68a]/80'
                   }`}
                 >
-                  <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                     <ShieldCheck className="w-4 h-4" />
                   </span>
                   <div>
-                    <div className="font-extrabold text-amber-950">
-                      Màu Vàng Cam SGK · Khí hiếm (7 nguyên tố)
+                    <div className="font-extrabold text-amber-950 text-xs">
+                      Màu Vàng Cam SGK · Khí hiếm (7)
                     </div>
                     <div className="text-[11px] text-amber-900/85">
-                      Cột 18 (Nhóm VIIIA): Lớp vỏ ngoài cùng bão hòa bền vững (8e, riêng He có 2e)
+                      Cột 18 (Nhóm VIIIA): Lớp vỏ ngoài cùng bão hòa bền vững (8e, riêng He 2e)
                     </div>
                   </div>
                 </button>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-rose-800 font-semibold px-1">
-                <span className="inline-block w-4 h-2.5 border-l-[3px] border-b-[3px] border-rose-600 bg-pink-100" />
+              <div className="flex items-start sm:items-center gap-2 text-[11px] text-rose-800 font-semibold px-1">
+                <span className="inline-block w-4 h-2.5 border-l-[3px] border-b-[3px] border-rose-600 bg-pink-100 shrink-0 mt-0.5 sm:mt-0" />
                 <span>
                   Đường bậc thang ziczac màu đỏ đậm (từ B → Si → As → Te → At): Ranh giới phân chia vùng Kim loại (bên trái) và Phi kim (bên phải) theo chuẩn SGK.
                 </span>
               </div>
             </div>
           ) : colorMode === 'block_spdf' ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 w-full">
               <div className="p-2.5 rounded-xl bg-sky-100 border border-sky-300 flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-sky-600 text-white font-mono font-extrabold flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-lg bg-sky-600 text-white font-mono font-extrabold flex items-center justify-center text-xs shrink-0">
                   s
                 </span>
                 <div>
@@ -929,7 +683,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 </div>
               </div>
               <div className="p-2.5 rounded-xl bg-amber-100 border border-amber-300 flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-amber-500 text-white font-mono font-extrabold flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-lg bg-amber-500 text-white font-mono font-extrabold flex items-center justify-center text-xs shrink-0">
                   p
                 </span>
                 <div>
@@ -938,7 +692,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 </div>
               </div>
               <div className="p-2.5 rounded-xl bg-rose-100 border border-rose-300 flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-rose-600 text-white font-mono font-extrabold flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-lg bg-rose-600 text-white font-mono font-extrabold flex items-center justify-center text-xs shrink-0">
                   d
                 </span>
                 <div>
@@ -947,7 +701,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 </div>
               </div>
               <div className="p-2.5 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center gap-2.5">
-                <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-mono font-extrabold flex items-center justify-center text-xs">
+                <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white font-mono font-extrabold flex items-center justify-center text-xs shrink-0">
                   f
                 </span>
                 <div>
@@ -957,13 +711,13 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-between w-full gap-4">
-              <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between w-full gap-3">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span className="font-bold text-indigo-950">
                   Thang màu Bán kính nguyên tử (pm):
                 </span>
                 <span
-                  className={`px-2.5 py-1 rounded-md border font-mono text-[11px] ${
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] ${
                     isDarkMode
                       ? 'bg-slate-950 border-indigo-500/40 text-slate-200'
                       : 'bg-indigo-50 border-indigo-200 text-slate-800'
@@ -972,7 +726,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                   &lt; 95 pm (Nhỏ)
                 </span>
                 <span
-                  className={`px-2.5 py-1 rounded-md border font-mono text-[11px] ${
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] ${
                     isDarkMode
                       ? 'bg-indigo-950 border-indigo-500/60 text-indigo-200'
                       : 'bg-indigo-100 border-indigo-200 text-slate-900'
@@ -981,7 +735,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                   95–124 pm
                 </span>
                 <span
-                  className={`px-2.5 py-1 rounded-md border font-mono text-[11px] font-bold ${
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] font-bold ${
                     isDarkMode
                       ? 'bg-indigo-900 border-indigo-400/80 text-indigo-100'
                       : 'bg-indigo-300 border-indigo-400 text-slate-950'
@@ -989,17 +743,17 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 >
                   125–149 pm
                 </span>
-                <span className="px-2.5 py-1 rounded-md bg-indigo-700 border border-indigo-500 text-white font-mono text-[11px]">
+                <span className="px-2 py-1 rounded-md bg-indigo-700 border border-indigo-500 text-white font-mono text-[11px]">
                   150–179 pm
                 </span>
-                <span className="px-2.5 py-1 rounded-md bg-indigo-600 border border-indigo-400 text-white font-mono text-[11px]">
+                <span className="px-2 py-1 rounded-md bg-indigo-600 border border-indigo-400 text-white font-mono text-[11px]">
                   180–219 pm
                 </span>
-                <span className="px-2.5 py-1 rounded-md bg-indigo-500 border border-sky-300 text-white font-mono text-[11px] font-bold">
+                <span className="px-2 py-1 rounded-md bg-indigo-500 border border-sky-300 text-white font-mono text-[11px] font-bold">
                   ≥ 220 pm (Rất lớn)
                 </span>
               </div>
-              <div className="text-slate-600 font-medium">
+              <div className="text-slate-600 font-medium text-[11px] sm:text-xs">
                 Ô màu càng đậm & vòng tròn càng to → Bán kính nguyên tử càng lớn
               </div>
             </div>
@@ -1007,10 +761,333 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         </div>
       </div>
 
-      {/* Periodic Table 18-Column Grid + Trend Arrows */}
-      <div className="bg-white border-2 border-slate-200/90 rounded-3xl p-4 sm:p-6 overflow-x-auto shadow-md">
+      {/* 2. Selected Element Interactive Modal Overlay (Portaled to document.body so blurred backdrop covers 100% of viewport) */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {selectedElement && (
+              <div className={isDarkMode ? 'dark-theme' : ''}>
+                <motion.div
+                  id="selected-element-detail-panel"
+                  key="element-modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`Chi tiết nguyên tố ${selectedElement.name}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => {
+                    onSelectElement(null);
+                    setHighlightPeriodOrGroup('none');
+                  }}
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: '100vw',
+                    height: '100dvh',
+                    minHeight: '100vh',
+                    margin: 0,
+                  }}
+                  className="fixed inset-0 z-[9999] flex items-center justify-center p-2.5 sm:p-6 bg-slate-950/75 backdrop-blur-md overflow-y-auto"
+                >
+                  <motion.div
+                    key={selectedElement.atomicNumber}
+                    initial={{ opacity: 0, scale: 0.94, y: 16 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.94, y: 16 }}
+                    transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full max-w-[1220px] max-h-[92dvh] overflow-y-auto bg-white border-2 border-sky-400/85 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl my-auto"
+                  >
+              {/* Decorative Ambient SGK Color Glow in Top-Left Corner */}
+              <div
+                aria-hidden="true"
+                className={`pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full blur-3xl opacity-35 ${
+                  selectedElement.category === 'metal'
+                    ? 'bg-sky-400'
+                    : selectedElement.category === 'nonmetal'
+                    ? 'bg-pink-400'
+                    : 'bg-amber-400'
+                }`}
+              />
+
+              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+                {/* Left 7 Cols: Exact Position Breakdown (Ô, Chu kì, Nhóm A/B) */}
+                <div className="lg:col-span-7 flex flex-col justify-between space-y-4 sm:space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div className="flex items-start sm:items-center gap-3.5 sm:gap-4">
+                      {/* Vivid SGK-Colored Collector Element Tile Badge */}
+                      <motion.div
+                        initial={{ rotate: -4, scale: 0.9 }}
+                        animate={{ rotate: 0, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                        className={`element-tile-shimmer w-18 h-18 sm:w-22 sm:h-22 rounded-2xl border-2 flex flex-col items-center justify-center shrink-0 shadow-md ${
+                          isDarkMode
+                            ? selectedElement.category === 'metal'
+                              ? 'bg-gradient-to-br from-sky-900 via-sky-950 to-blue-950 border-sky-400 text-sky-200 shadow-sky-500/30'
+                              : selectedElement.category === 'nonmetal'
+                              ? 'bg-gradient-to-br from-rose-900 via-pink-950 to-rose-950 border-pink-400 text-pink-200 shadow-pink-500/30'
+                              : 'bg-gradient-to-br from-amber-900 via-amber-950 to-yellow-950 border-amber-400 text-amber-200 shadow-amber-500/30'
+                            : selectedElement.category === 'metal'
+                            ? 'bg-gradient-to-br from-[#dff2fe] via-[#bae6fd] to-[#7dd3fc] border-sky-500 text-sky-950 shadow-sky-500/20'
+                            : selectedElement.category === 'nonmetal'
+                            ? 'bg-gradient-to-br from-[#fce7f3] via-[#fbcfe8] to-[#f472b6] border-rose-500 text-rose-950 shadow-rose-500/20'
+                            : 'bg-gradient-to-br from-[#fef3c7] via-[#fde68a] to-[#fbbf24] border-amber-500 text-amber-950 shadow-amber-500/20'
+                        }`}
+                      >
+                        <span className="font-mono text-[11px] sm:text-xs font-extrabold opacity-90 leading-none">
+                          Z = {selectedElement.atomicNumber}
+                        </span>
+                        <span className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight mt-0.5">
+                          {selectedElement.symbol}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-bold opacity-90 leading-none mt-0.5">
+                          M = {selectedElement.atomicMass}
+                        </span>
+                      </motion.div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-600">
+                          <span
+                            className={`font-extrabold ${
+                              selectedElement.category === 'metal'
+                                ? 'text-sky-700'
+                                : selectedElement.category === 'nonmetal'
+                                ? 'text-rose-700'
+                                : 'text-amber-700'
+                            }`}
+                          >
+                            {categoryLabel(selectedElement.category)} (Màu chuẩn SGK)
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          <span>{selectedElement.subCategory}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="text-indigo-700 font-bold">
+                            Nguyên tố họ {selectedElement.block}
+                          </span>
+                        </div>
+                        <h2 className="font-display text-xl sm:text-3xl font-extrabold text-slate-900 mt-0.5 break-words">
+                          {selectedElement.name}{' '}
+                          <span className="text-slate-500 font-semibold">
+                            ({selectedElement.vietnameseName})
+                          </span>
+                        </h2>
+                        <p className="text-xs text-slate-600 mt-1 font-mono break-words">
+                          Cấu hình electron:{' '}
+                          <strong className="text-slate-950">{selectedElement.fullElectronConfig}</strong>{' '}
+                          {selectedElement.electronConfig !== selectedElement.fullElectronConfig && (
+                            <span className="text-sky-700 font-semibold">
+                              (Rút gọn: {selectedElement.electronConfig})
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Prev / Next Element + Close Modal Button */}
+                    <div className="flex items-center gap-1.5 self-end sm:self-start shrink-0">
+                      {selectedElement.atomicNumber > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onSelectElement(ELEMENT_BY_Z[selectedElement.atomicNumber - 1])
+                          }
+                          title="Nguyên tố đứng trước"
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-mono font-bold transition-colors cursor-pointer"
+                        >
+                          ← Ô {selectedElement.atomicNumber - 1}
+                        </button>
+                      )}
+                      {selectedElement.atomicNumber < 118 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onSelectElement(ELEMENT_BY_Z[selectedElement.atomicNumber + 1])
+                          }
+                          title="Nguyên tố kế tiếp"
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-mono font-bold transition-colors cursor-pointer"
+                        >
+                          Ô {selectedElement.atomicNumber + 1} →
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectElement(null);
+                          setHighlightPeriodOrGroup('none');
+                        }}
+                        title="Đóng cửa sổ chi tiết (Phím Esc hoặc bấm ra ngoài)"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                      >
+                        <X className="w-4 h-4" />
+                        <span>Đóng</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick Assign to Dual Comparison */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 bg-sky-50 border border-sky-200 p-1.5 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompareElementA(selectedElement);
+                          setShowDualCompare(true);
+                          onSelectElement(null);
+                          setTimeout(() => {
+                            const el = document.getElementById('dual-element-comparison');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 80);
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold text-sky-800 hover:bg-sky-100 rounded-lg transition-colors cursor-pointer"
+                      >
+                        So sánh: Đặt {selectedElement.symbol} làm nguyên tố A
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompareElementB(selectedElement);
+                          setShowDualCompare(true);
+                          onSelectElement(null);
+                          setTimeout(() => {
+                            const el = document.getElementById('dual-element-comparison');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 80);
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold text-indigo-800 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Đặt {selectedElement.symbol} làm nguyên tố B
+                      </button>
+                    </div>
+
+                    <span className="text-[11px] text-slate-500">
+                      Mẹo: Bấm ra vùng mờ bên ngoài hoặc phím <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono font-bold text-slate-700">Esc</kbd> để đóng
+                    </span>
+                  </div>
+
+                  {/* 3 Core Position Pillars: Số thứ tự ô, Chu kì, Nhóm (ghi rõ nhóm A hay B) */}
+                  <div>
+                    <div className="text-xs font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+                      <Compass className="w-4 h-4 text-sky-600 shrink-0" />
+                      <span>
+                        Vị trí chính xác của nguyên tố {selectedElement.symbol} trong Bảng tuần hoàn:
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* 1. Số thứ tự ô */}
+                      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-slate-100/80 border border-slate-200/90 shadow-2xs">
+                        <div className="text-xs font-semibold text-slate-500">1. Số thứ tự ô nguyên tố</div>
+                        <div className="font-display text-xl sm:text-2xl font-extrabold text-slate-900 mt-1 tabular-nums">
+                          Ô số {selectedElement.atomicNumber}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                          Số hiệu nguyên tử{' '}
+                          <span className="font-mono font-bold text-slate-900">
+                            Z = {selectedElement.atomicNumber}
+                          </span>{' '}
+                          ({selectedElement.atomicNumber}p, {selectedElement.atomicNumber}e).
+                        </p>
+                      </div>
+
+                      {/* 2. Chu kì */}
+                      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-sky-50/90 via-white to-sky-100/60 border border-sky-200 shadow-2xs">
+                        <div className="text-xs font-semibold text-sky-800">2. Chu kì (Hàng ngang)</div>
+                        <div className="font-display text-xl sm:text-2xl font-extrabold text-sky-950 mt-1 tabular-nums">
+                          Chu kì {selectedElement.period}
+                        </div>
+                        <p className="text-xs text-sky-900/85 mt-1.5 leading-relaxed">
+                          Nguyên tử có{' '}
+                          <strong className="text-sky-950">
+                            {selectedElement.shells.length} lớp electron
+                          </strong>{' '}
+                          ({selectedElement.shells.join(' · ')}).
+                        </p>
+                      </div>
+
+                      {/* 3. Nhóm (Ghi rõ Nhóm A hay B) */}
+                      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-rose-50/70 via-white to-amber-50/60 border border-rose-200/90 shadow-2xs">
+                        <div className="text-xs font-semibold text-rose-800">3. Nhóm (Cột dọc)</div>
+                        <div className="font-display text-xl sm:text-2xl font-extrabold text-slate-950 mt-1 tabular-nums">
+                          Nhóm {selectedElement.groupRoman}{' '}
+                          <span className="text-sm font-extrabold text-rose-700">
+                            (Nhóm {selectedElement.groupType})
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 mt-1.5 leading-relaxed">
+                          Thuộc <strong>Nhóm {selectedElement.groupType}</strong> (Cột {selectedElement.column}) · Họ{' '}
+                          <strong>{selectedElement.block}</strong>
+                          {selectedElement.fBlockRow
+                            ? ` (${selectedElement.fBlockRow === 'lanthanide' ? 'Lanthanide' : 'Actinide'})`
+                            : `, có ${selectedElement.valenceElectrons}e lớp ngoài cùng`}
+                          .
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fun Chemistry Note & Key Metrics */}
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-r from-slate-50 via-sky-50/40 to-rose-50/30 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="text-xs text-slate-700 leading-relaxed flex-1">
+                      <strong className="text-slate-900">Đặc điểm & Ứng dụng thú vị: </strong>
+                      {getElementFunFact(selectedElement)}
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4 text-xs">
+                      <div>
+                        <span className="text-slate-500 block">Bán kính nguyên tử</span>
+                        <span className="font-mono text-sm font-extrabold text-indigo-700 tabular-nums">
+                          {selectedElement.atomicRadius ? `${selectedElement.atomicRadius} pm` : '—'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block">Độ âm điện</span>
+                        <span className="font-mono text-sm font-extrabold text-rose-700 tabular-nums">
+                          {selectedElement.electronegativity !== null
+                            ? selectedElement.electronegativity.toFixed(2)
+                            : 'Khí hiếm'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                    {/* Right 5 Cols: Interactive 3D Canvas Atom Model */}
+                    <Atom3DCanvas element={selectedElement} />
+                  </div>
+                </motion.div>
+              </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/* 3. Periodic Table 18-Column Grid (Placed BEFORE the Dual Comparison section!) */}
+      <div className="bg-white border-2 border-slate-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-md space-y-3">
+        {/* Mobile & Tablet Friendly Toolbar above Periodic Table */}
+        <div className="flex flex-wrap items-center justify-between gap-2 lg:hidden pb-1">
+          <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+            <Smartphone className="w-4 h-4 text-sky-600 shrink-0" />
+            <span>Vuốt ngang bảng để xem 18 cột hoặc bật chế độ Thu gọn:</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsCompactMobileTable((prev) => !prev)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              isCompactMobileTable
+                ? 'bg-sky-600 text-white border-sky-500'
+                : 'bg-slate-100 text-slate-800 border-slate-200'
+            }`}
+          >
+            {isCompactMobileTable ? 'Đang bật: Bảng thu gọn' : 'Thu gọn bảng cho Điện thoại'}
+          </button>
+        </div>
+
         {colorMode === 'radius_heatmap' && (
-          <div className="mb-4 p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-indigo-950">
+          <div className="p-3 sm:p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 text-xs text-indigo-950">
             <div className="flex items-center gap-2 font-bold">
               <ArrowRight className="w-4 h-4 text-indigo-700 shrink-0" />
               <span>
@@ -1026,243 +1103,284 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
           </div>
         )}
 
-        <div className="min-w-[1140px]">
-          {/* Live Hover Status Strip above the table */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 mb-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white text-xs shadow-xs">
-            {hoveredElement ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-bold text-sky-300">Đang soi tọa độ:</span>
-                <strong className="font-display text-sm text-white">
-                  Ô {hoveredElement.atomicNumber} · {hoveredElement.symbol} ({hoveredElement.name} / {hoveredElement.vietnameseName})
-                </strong>
-                <span aria-hidden="true" className="text-slate-400">·</span>
-                <span>
-                  Chu kì <strong className="text-sky-300">{hoveredElement.period}</strong>
-                </span>
-                <span aria-hidden="true" className="text-slate-400">·</span>
-                <span>
-                  Nhóm <strong className="text-amber-300">{hoveredElement.groupRoman} (Nhóm {hoveredElement.groupType})</strong>
-                </span>
-                <span aria-hidden="true" className="text-slate-400">·</span>
-                <span className="font-mono text-slate-200">
-                  Cấu hình: {hoveredElement.electronConfig}
-                </span>
-                {hoveredElement.atomicRadius && (
-                  <>
-                    <span aria-hidden="true" className="text-slate-400">·</span>
-                    <span className="font-mono font-bold text-pink-300">
-                      Bán kính: {hoveredElement.atomicRadius} pm
-                    </span>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="text-slate-300">
-                Di chuột qua bất kì ô nguyên tố nào để gióng tia tọa độ Chu kì – Nhóm và bấm vào ô để khóa vị trí trên mô hình nguyên tử 3D hiện đại phía trên.
-              </div>
-            )}
-            <span className="font-mono text-[11px] text-sky-300 font-bold shrink-0 ml-2">
-              Đang chọn: {selectedElement.symbol} (Z={selectedElement.atomicNumber})
-            </span>
-          </div>
-
-          {/* Top Column Headers (1..18 and Group IA..VIIIA / B) */}
-          <div
-            className="grid gap-1.5 mb-1.5"
-            style={{ gridTemplateColumns: '52px repeat(18, minmax(55px, 1fr))' }}
-          >
-            <div className="flex flex-col items-center justify-center p-1 rounded-lg bg-slate-900 text-[9px] font-bold text-white text-center">
-              <span className="text-amber-300">Nhóm →</span>
-              <span className="text-sky-300">Chu kì ↓</span>
+        <div className="overflow-x-auto pb-2 -mx-1 px-1">
+          <div className={gridMinWidthClass}>
+            {/* Live Hover Status Strip above the table */}
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 mb-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white text-xs shadow-xs">
+              {hoveredElement ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-sky-300">Đang soi tọa độ:</span>
+                  <strong className="font-display text-sm text-white">
+                    Ô {hoveredElement.atomicNumber} · {hoveredElement.symbol} ({hoveredElement.name} / {hoveredElement.vietnameseName})
+                  </strong>
+                  <span aria-hidden="true" className="text-slate-400">·</span>
+                  <span>
+                    Chu kì <strong className="text-sky-300">{hoveredElement.period}</strong>
+                  </span>
+                  <span aria-hidden="true" className="text-slate-400">·</span>
+                  <span>
+                    Nhóm <strong className="text-amber-300">{hoveredElement.groupRoman} (Nhóm {hoveredElement.groupType})</strong>
+                  </span>
+                  <span aria-hidden="true" className="text-slate-400">·</span>
+                  <span className="font-mono text-slate-200">
+                    Cấu hình: {hoveredElement.electronConfig}
+                  </span>
+                  {hoveredElement.atomicRadius && (
+                    <>
+                      <span aria-hidden="true" className="text-slate-400">·</span>
+                      <span className="font-mono font-bold text-pink-300">
+                        Bán kính: {hoveredElement.atomicRadius} pm
+                      </span>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-slate-200">
+                  👉 <strong>Bấm vào bất kì ô nguyên tố nào bên dưới</strong> để mở Bảng phân tích vị trí (Ô, Chu kì, Nhóm) & Mô hình nguyên tử 3D hiện đại.
+                </div>
+              )}
+              <span className="font-mono text-[11px] text-sky-300 font-bold shrink-0">
+                {selectedElement
+                  ? `Đang mở: ${selectedElement.symbol} (Z=${selectedElement.atomicNumber})`
+                  : 'Chưa chọn nguyên tố (Bấm vào 1 ô để xem)'}
+              </span>
             </div>
-            {Array.from({ length: 18 }, (_, i) => i + 1).map((col) => {
-              const grp = COLUMN_TO_GROUP[col];
-              const isSelectedCol = selectedElement.column === col && !selectedElement.fBlockRow;
-              const isHoveredCol = hoveredElement?.column === col && !hoveredElement?.fBlockRow;
-              return (
+
+            {/* Top Column Headers (1..18 and Group IA..VIIIA / B) */}
+            <div className="grid gap-1 sm:gap-1.5 mb-1.5" style={gridTemplateStyle}>
+              <div className="flex flex-col items-center justify-center p-1 rounded-lg bg-slate-900 text-[8px] sm:text-[9px] font-bold text-white text-center">
+                <span className="text-amber-300">Nhóm →</span>
+                <span className="text-sky-300">Chu kì ↓</span>
+              </div>
+              {Array.from({ length: 18 }, (_, i) => i + 1).map((col) => {
+                const grp = COLUMN_TO_GROUP[col];
+                const isSelectedCol =
+                  selectedElement !== null &&
+                  selectedElement.column === col &&
+                  !selectedElement.fBlockRow;
+                const isHoveredCol = hoveredElement?.column === col && !hoveredElement?.fBlockRow;
+                return (
+                  <div
+                    key={col}
+                    className={`flex flex-col items-center justify-center py-1 sm:py-1.5 px-0.5 rounded-lg border text-center transition-all duration-150 ${
+                      isSelectedCol
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        : isHoveredCol
+                        ? 'bg-sky-600 text-white border-sky-600 scale-105 shadow-sm'
+                        : grp.type === 'A'
+                        ? 'bg-sky-50/90 border-sky-200 text-slate-900'
+                        : 'bg-rose-50/70 border-rose-200/80 text-slate-700'
+                    }`}
+                  >
+                    <span className="font-mono text-[8px] sm:text-[10px] font-bold leading-tight">
+                      {isCompactMobileTable ? col : `Cột ${col}`}
+                    </span>
+                    <span
+                      className={`text-[8px] sm:text-[10px] font-extrabold leading-tight mt-0.5 ${
+                        isSelectedCol || isHoveredCol
+                          ? 'text-amber-300'
+                          : grp.type === 'A'
+                          ? 'text-sky-800'
+                          : 'text-rose-700'
+                      }`}
+                    >
+                      {grp.roman}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 7 Periods Rows */}
+            <div className="space-y-1 sm:space-y-1.5">
+              {Array.from({ length: 7 }, (_, i) => i + 1).map((period) => {
+                const isSelectedPeriod = selectedElement?.period === period;
+                const isHoveredPeriod = hoveredElement?.period === period;
+                return (
+                  <div
+                    key={period}
+                    className="grid gap-1 sm:gap-1.5"
+                    style={gridTemplateStyle}
+                  >
+                    {/* Period Header Cell */}
+                    <div
+                      className={`flex flex-col items-center justify-center rounded-lg border text-center transition-all duration-150 ${
+                        isSelectedPeriod
+                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                          : isHoveredPeriod
+                          ? 'bg-sky-600 text-white border-sky-600 scale-105 shadow-sm'
+                          : 'bg-slate-100 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      <span className="text-[8px] sm:text-[9px] font-semibold opacity-75">
+                        {isCompactMobileTable ? 'CK' : 'Chu kì'}
+                      </span>
+                      <span className="font-display text-sm sm:text-base font-extrabold leading-none mt-0.5">
+                        {period}
+                      </span>
+                      {!isCompactMobileTable && (
+                        <span className="font-mono text-[8px] opacity-80 mt-0.5">
+                          {period} lớp e
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 18 Columns in this Period */}
+                    {Array.from({ length: 18 }, (_, i) => i + 1).map((col) => {
+                      if (period === 6 && col === 3) {
+                        const isLanthanideSelected = selectedElement?.fBlockRow === 'lanthanide';
+                        return (
+                          <button
+                            key="lanthanide-marker"
+                            type="button"
+                            onClick={() => handleElementClick(ELEMENT_BY_Z[57])}
+                            className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 cursor-pointer ${
+                              isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'
+                            } ${
+                              isLanthanideSelected
+                                ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
+                                : isDarkMode
+                                ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'
+                                : 'bg-gradient-to-br from-emerald-100 to-teal-200/85 border-emerald-400 text-emerald-950 hover:border-emerald-600'
+                            }`}
+                          >
+                            <span className="font-mono text-[8px] sm:text-[9px] font-bold">57–71</span>
+                            <span className="font-display text-[10px] sm:text-xs font-extrabold mt-0.5">La–Lu</span>
+                            {!isCompactMobileTable && (
+                              <span className="text-[8px] font-bold leading-tight mt-0.5">
+                                Lanthanide ↓
+                              </span>
+                            )}
+                          </button>
+                        );
+                      }
+
+                      if (period === 7 && col === 3) {
+                        const isActinideSelected = selectedElement?.fBlockRow === 'actinide';
+                        return (
+                          <button
+                            key="actinide-marker"
+                            type="button"
+                            onClick={() => handleElementClick(ELEMENT_BY_Z[89])}
+                            className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 cursor-pointer ${
+                              isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'
+                            } ${
+                              isActinideSelected
+                                ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
+                                : isDarkMode
+                                ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'
+                                : 'bg-gradient-to-br from-emerald-100 to-teal-200/85 border-emerald-400 text-emerald-950 hover:border-emerald-600'
+                            }`}
+                          >
+                            <span className="font-mono text-[8px] sm:text-[9px] font-bold">89–103</span>
+                            <span className="font-display text-[10px] sm:text-xs font-extrabold mt-0.5">Ac–Lr</span>
+                            {!isCompactMobileTable && (
+                              <span className="text-[8px] font-bold leading-tight mt-0.5">
+                                Actinide ↓
+                              </span>
+                            )}
+                          </button>
+                        );
+                      }
+
+                      const el = mainGridMap.get(`${period}-${col}`);
+                      if (!el) {
+                        return (
+                          <div
+                            key={`empty-${period}-${col}`}
+                            className={isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'}
+                          />
+                        );
+                      }
+
+                      return renderElementCell(el);
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Separated 2 Bottom Rows: Lanthanide (57..71) & Actinide (89..103) */}
+            <div className="mt-5 pt-4 border-t-2 border-dashed border-slate-200 space-y-1.5 sm:space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 mb-1">
+                <span className="font-bold text-slate-800">
+                  Hai hàng tách riêng bên dưới: Họ Lanthanide (Chu kì 6, Nhóm IIIB) và Họ Actinide (Chu kì 7, Nhóm IIIB)
+                </span>
+                <span className="text-slate-500 font-medium">
+                  Bấm vào bất kì nguyên tố nào để xem cấu hình electron họ 4f / 5f
+                </span>
+              </div>
+
+              {/* Row 1: Lanthanides (57..71) */}
+              <div className="grid gap-1 sm:gap-1.5" style={gridTemplateStyle}>
                 <div
-                  key={col}
-                  className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded-lg border text-center transition-all duration-150 ${
-                    isSelectedCol
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : isHoveredCol
-                      ? 'bg-sky-600 text-white border-sky-600 scale-105 shadow-sm'
-                      : grp.type === 'A'
-                      ? 'bg-sky-50/90 border-sky-200 text-slate-900'
-                      : 'bg-rose-50/70 border-rose-200/80 text-slate-700'
+                  className={`col-span-3 flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-100'
+                      : 'bg-gradient-to-r from-emerald-100 to-teal-100 border-emerald-400 text-emerald-950'
                   }`}
                 >
-                  <span className="font-mono text-[10px] font-bold leading-tight">
-                    Cột {col}
-                  </span>
-                  <span
-                    className={`text-[10px] font-extrabold leading-tight mt-0.5 ${
-                      isSelectedCol || isHoveredCol
-                        ? 'text-amber-300'
-                        : grp.type === 'A'
-                        ? 'text-sky-800'
-                        : 'text-rose-700'
-                    }`}
-                  >
-                    {grp.roman}
-                  </span>
+                  <div>
+                    <div className="font-display text-[11px] sm:text-xs font-extrabold">Họ Lanthanide</div>
+                    <div className="text-[9px] sm:text-[10px] font-semibold text-emerald-800">
+                      Chu kì 6 · Nhóm IIIB (57 → 71)
+                    </div>
+                  </div>
+                  <span className="font-mono text-xs font-extrabold">4f</span>
                 </div>
-              );
-            })}
-          </div>
+                {lanthanides.map((el) => renderElementCell(el))}
+                <div className="col-span-1" />
+              </div>
 
-          {/* 7 Periods Rows */}
-          <div className="space-y-1.5">
-            {Array.from({ length: 7 }, (_, i) => i + 1).map((period) => {
-              const isSelectedPeriod = selectedElement.period === period;
-              const isHoveredPeriod = hoveredElement?.period === period;
-              return (
+              {/* Row 2: Actinides (89..103) */}
+              <div className="grid gap-1 sm:gap-1.5" style={gridTemplateStyle}>
                 <div
-                  key={period}
-                  className="grid gap-1.5"
-                  style={{ gridTemplateColumns: '52px repeat(18, minmax(55px, 1fr))' }}
+                  className={`col-span-3 flex items-center justify-between px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg border ${
+                    isDarkMode
+                      ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-100'
+                      : 'bg-gradient-to-r from-emerald-100 to-teal-100 border-emerald-400 text-emerald-950'
+                  }`}
                 >
-                  {/* Period Header Cell */}
-                  <div
-                    className={`flex flex-col items-center justify-center rounded-lg border text-center transition-all duration-150 ${
-                      isSelectedPeriod
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                        : isHoveredPeriod
-                        ? 'bg-sky-600 text-white border-sky-600 scale-105 shadow-sm'
-                        : 'bg-slate-100 border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <span className="text-[9px] font-semibold opacity-75">Chu kì</span>
-                    <span className="font-display text-base font-extrabold leading-none mt-0.5">
-                      {period}
-                    </span>
-                    <span className="font-mono text-[8px] opacity-80 mt-0.5">
-                      {period} lớp e
-                    </span>
+                  <div>
+                    <div className="font-display text-[11px] sm:text-xs font-extrabold">Họ Actinide</div>
+                    <div className="text-[9px] sm:text-[10px] font-semibold text-emerald-800">
+                      Chu kì 7 · Nhóm IIIB (89 → 103)
+                    </div>
                   </div>
-
-                  {/* 18 Columns in this Period */}
-                  {Array.from({ length: 18 }, (_, i) => i + 1).map((col) => {
-                    if (period === 6 && col === 3) {
-                      const isLanthanideSelected = selectedElement.fBlockRow === 'lanthanide';
-                      return (
-                        <button
-                          key="lanthanide-marker"
-                          type="button"
-                          onClick={() => onSelectElement(ELEMENT_BY_Z[57])}
-                          className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 min-h-[66px] cursor-pointer ${
-                            isLanthanideSelected
-                              ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
-                              : isDarkMode
-                              ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'
-                              : 'bg-gradient-to-br from-emerald-100 to-teal-200/85 border-emerald-400 text-emerald-950 hover:border-emerald-600'
-                          }`}
-                        >
-                          <span className="font-mono text-[9px] font-bold">57–71</span>
-                          <span className="font-display text-xs font-extrabold mt-0.5">La–Lu</span>
-                          <span className="text-[8px] font-bold leading-tight mt-0.5">
-                            Lanthanide ↓
-                          </span>
-                        </button>
-                      );
-                    }
-
-                    if (period === 7 && col === 3) {
-                      const isActinideSelected = selectedElement.fBlockRow === 'actinide';
-                      return (
-                        <button
-                          key="actinide-marker"
-                          type="button"
-                          onClick={() => onSelectElement(ELEMENT_BY_Z[89])}
-                          className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 min-h-[66px] cursor-pointer ${
-                            isActinideSelected
-                              ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
-                              : isDarkMode
-                              ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'
-                              : 'bg-gradient-to-br from-emerald-100 to-teal-200/85 border-emerald-400 text-emerald-950 hover:border-emerald-600'
-                          }`}
-                        >
-                          <span className="font-mono text-[9px] font-bold">89–103</span>
-                          <span className="font-display text-xs font-extrabold mt-0.5">Ac–Lr</span>
-                          <span className="text-[8px] font-bold leading-tight mt-0.5">
-                            Actinide ↓
-                          </span>
-                        </button>
-                      );
-                    }
-
-                    const el = mainGridMap.get(`${period}-${col}`);
-                    if (!el) {
-                      return <div key={`empty-${period}-${col}`} className="min-h-[66px]" />;
-                    }
-
-                    return renderElementCell(el);
-                  })}
+                  <span className="font-mono text-xs font-extrabold">5f</span>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Separated 2 Bottom Rows: Lanthanide (57..71) & Actinide (89..103) */}
-          <div className="mt-6 pt-5 border-t-2 border-dashed border-slate-200 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-              <span className="font-bold text-slate-800">
-                Hai hàng tách riêng bên dưới: Họ Lanthanide (Chu kì 6, Nhóm IIIB) và Họ Actinide (Chu kì 7, Nhóm IIIB)
-              </span>
-              <span className="text-slate-500 font-medium">
-                Bấm vào bất kì nguyên tố nào để xem cấu hình electron họ 4f / 5f
-              </span>
-            </div>
-
-            {/* Row 1: Lanthanides (57..71) */}
-            <div
-              className="grid gap-1.5"
-              style={{ gridTemplateColumns: '52px repeat(18, minmax(55px, 1fr))' }}
-            >
-              <div
-                className={`col-span-3 flex items-center justify-between px-3.5 py-2 rounded-lg border ${
-                  isDarkMode
-                    ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-100'
-                    : 'bg-gradient-to-r from-emerald-100 to-teal-100 border-emerald-400 text-emerald-950'
-                }`}
-              >
-                <div>
-                  <div className="font-display text-xs font-extrabold">Họ Lanthanide</div>
-                  <div className="text-[10px] font-semibold text-emerald-800">
-                    Chu kì 6 · Nhóm IIIB (57 → 71)
-                  </div>
-                </div>
-                <span className="font-mono text-xs font-extrabold">4f</span>
+                {actinides.map((el) => renderElementCell(el))}
+                <div className="col-span-1" />
               </div>
-              {lanthanides.map((el) => renderElementCell(el))}
-              <div className="col-span-1" />
-            </div>
-
-            {/* Row 2: Actinides (89..103) */}
-            <div
-              className="grid gap-1.5"
-              style={{ gridTemplateColumns: '52px repeat(18, minmax(55px, 1fr))' }}
-            >
-              <div
-                className={`col-span-3 flex items-center justify-between px-3.5 py-2 rounded-lg border ${
-                  isDarkMode
-                    ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-100'
-                    : 'bg-gradient-to-r from-emerald-100 to-teal-100 border-emerald-400 text-emerald-950'
-                }`}
-              >
-                <div>
-                  <div className="font-display text-xs font-extrabold">Họ Actinide</div>
-                  <div className="text-[10px] font-semibold text-emerald-800">
-                    Chu kì 7 · Nhóm IIIB (89 → 103)
-                  </div>
-                </div>
-                <span className="font-mono text-xs font-extrabold">5f</span>
-              </div>
-              {actinides.map((el) => renderElementCell(el))}
-              <div className="col-span-1" />
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 4. Dual Element Side-by-Side Comparison Section — PLACED AFTER THE PERIODIC TABLE! */}
+      <div id="dual-element-comparison" className="space-y-3 scroll-mt-20">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+            <Scale className="w-4 h-4 text-sky-600" />
+            <span>Công cụ mở rộng bên dưới Bảng tuần hoàn:</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowDualCompare((prev) => !prev)}
+            className="text-xs font-bold text-sky-700 hover:text-sky-900 cursor-pointer underline underline-offset-4"
+          >
+            {showDualCompare ? 'Thu gọn Bảng so sánh 2 nguyên tố' : 'Mở rộng Bảng so sánh 2 nguyên tố'}
+          </button>
+        </div>
+
+        {showDualCompare && (
+          <ElementDualComparison
+            elementA={compareElementA}
+            elementB={compareElementB}
+            onChangeElementA={setCompareElementA}
+            onChangeElementB={setCompareElementB}
+          />
+        )}
       </div>
     </div>
   );

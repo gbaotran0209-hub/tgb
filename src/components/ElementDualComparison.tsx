@@ -133,18 +133,18 @@ export const ElementDualComparison: React.FC<ElementDualComparisonProps> = ({
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-6 shadow-xs">
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-5 sm:space-y-6 shadow-xs">
       {/* Header & Quick Preset Pairs */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
             <Scale className="w-5 h-5" />
           </div>
           <div>
             <div className="text-xs font-bold text-sky-700">
               Công cụ đối chiếu song song 2 nguyên tố bất kỳ (1 – 118)
             </div>
-            <h3 className="font-display text-lg sm:text-xl font-extrabold text-slate-900">
+            <h3 className="font-display text-base sm:text-xl font-extrabold text-slate-900">
               So Sánh Nguyên Tố: Bán Kính, Cấu Hình Electron & Độ Âm Điện
             </h3>
           </div>
@@ -180,18 +180,18 @@ export const ElementDualComparison: React.FC<ElementDualComparisonProps> = ({
       </div>
 
       {/* Dual Selector Row (Select Element A & Element B from all 118 elements) */}
-      <div className="grid grid-cols-1 lg:grid-cols-11 gap-4 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-11 gap-3 sm:gap-4 items-center">
         {/* Element A Selector Card */}
         <div
           onClick={() => setPickSlot('A')}
-          className={`lg:col-span-5 p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+          className={`lg:col-span-5 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
             pickSlot === 'A'
               ? 'bg-sky-50/70 border-sky-400 ring-1 ring-sky-400'
               : 'bg-slate-50 border-slate-200 hover:border-sky-300'
           }`}
         >
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2 flex-1 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <span className="text-xs font-extrabold text-sky-800">
                 NGUYÊN TỐ THỨ NHẤT (A)
               </span>
@@ -218,33 +218,33 @@ export const ElementDualComparison: React.FC<ElementDualComparisonProps> = ({
               </strong>
             </div>
           </div>
-          {renderMiniBohr(elementA, 'sky')}
+          <div className="self-center shrink-0">{renderMiniBohr(elementA, 'sky')}</div>
         </div>
 
         {/* Center Swap Button */}
-        <div className="lg:col-span-1 flex flex-col items-center justify-center">
+        <div className="lg:col-span-1 flex flex-row lg:flex-col items-center justify-center gap-2 lg:gap-0 py-1 lg:py-0">
           <button
             type="button"
             onClick={handleSwap}
             title="Đổi chỗ 2 nguyên tố"
-            className="w-11 h-11 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-sm transition-transform hover:scale-105 cursor-pointer"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-sm transition-transform hover:scale-105 cursor-pointer"
           >
             <ArrowLeftRight className="w-5 h-5" />
           </button>
-          <span className="text-[11px] font-semibold text-slate-400 mt-1">Đổi vị trí</span>
+          <span className="text-[11px] font-semibold text-slate-400 lg:mt-1">Đổi vị trí</span>
         </div>
 
         {/* Element B Selector Card */}
         <div
           onClick={() => setPickSlot('B')}
-          className={`lg:col-span-5 p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+          className={`lg:col-span-5 p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${
             pickSlot === 'B'
               ? 'bg-indigo-50/70 border-indigo-400 ring-1 ring-indigo-400'
               : 'bg-slate-50 border-slate-200 hover:border-indigo-300'
           }`}
         >
-          <div className="space-y-2 flex-1">
-            <div className="flex items-center justify-between">
+          <div className="space-y-2 flex-1 w-full min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <span className="text-xs font-extrabold text-indigo-800">
                 NGUYÊN TỐ THỨ HAI (B)
               </span>
@@ -271,13 +271,13 @@ export const ElementDualComparison: React.FC<ElementDualComparisonProps> = ({
               </strong>
             </div>
           </div>
-          {renderMiniBohr(elementB, 'indigo')}
+          <div className="self-center shrink-0">{renderMiniBohr(elementB, 'indigo')}</div>
         </div>
       </div>
 
       {/* Side-by-Side Data Comparison Table */}
       <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-        <table className="w-full text-left border-collapse text-xs sm:text-sm">
+        <table className="w-full min-w-[540px] text-left border-collapse text-xs sm:text-sm">
           <thead>
             <tr className="bg-slate-900 text-white">
               <th className="py-3.5 px-4 font-display font-bold w-1/4">
