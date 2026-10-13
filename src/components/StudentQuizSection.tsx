@@ -83,10 +83,10 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '07',
     fullName: 'Trần Minh Châu',
     className: '10A1',
-    correctCount: 24,
-    totalQuestions: 24,
-    mcScore: '7.0',
-    tfScore: '3.0',
+    correctCount: 10,
+    totalQuestions: 10,
+    mcScore: '8.0',
+    tfScore: '2.0',
     scoreOutOf10: '10.0',
     gradeLabel: 'Xuất sắc',
     completedAt: '08:15 · Hôm nay',
@@ -96,11 +96,11 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '14',
     fullName: 'Nguyễn Hoàng Hải',
     className: '10A1',
-    correctCount: 22,
-    totalQuestions: 24,
-    mcScore: '6.3',
-    tfScore: '2.5',
-    scoreOutOf10: '8.8',
+    correctCount: 9,
+    totalQuestions: 10,
+    mcScore: '7.0',
+    tfScore: '1.75',
+    scoreOutOf10: '8.75',
     gradeLabel: 'Giỏi',
     completedAt: '08:12 · Hôm nay',
   },
@@ -109,10 +109,10 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '22',
     fullName: 'Lê Thu Phương',
     className: '10A1',
-    correctCount: 21,
-    totalQuestions: 24,
-    mcScore: '6.0',
-    tfScore: '2.5',
+    correctCount: 9,
+    totalQuestions: 10,
+    mcScore: '7.0',
+    tfScore: '1.5',
     scoreOutOf10: '8.5',
     gradeLabel: 'Giỏi',
     completedAt: '08:10 · Hôm nay',
@@ -122,11 +122,11 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '09',
     fullName: 'Đặng Quốc Khánh',
     className: '10A1',
-    correctCount: 19,
-    totalQuestions: 24,
-    mcScore: '5.7',
-    tfScore: '2.0',
-    scoreOutOf10: '7.7',
+    correctCount: 8,
+    totalQuestions: 10,
+    mcScore: '6.0',
+    tfScore: '1.5',
+    scoreOutOf10: '7.5',
     gradeLabel: 'Khá',
     completedAt: '08:08 · Hôm nay',
   },
@@ -135,11 +135,11 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '31',
     fullName: 'Vũ Ngọc Ánh',
     className: '10A1',
-    correctCount: 18,
-    totalQuestions: 24,
-    mcScore: '5.4',
-    tfScore: '1.75',
-    scoreOutOf10: '7.15',
+    correctCount: 8,
+    totalQuestions: 10,
+    mcScore: '6.0',
+    tfScore: '1.25',
+    scoreOutOf10: '7.25',
     gradeLabel: 'Khá',
     completedAt: '08:06 · Hôm nay',
   },
@@ -148,11 +148,11 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '05',
     fullName: 'Hoàng Gia Bảo',
     className: '10A2',
-    correctCount: 23,
-    totalQuestions: 24,
-    mcScore: '6.7',
-    tfScore: '2.5',
-    scoreOutOf10: '9.2',
+    correctCount: 10,
+    totalQuestions: 10,
+    mcScore: '8.0',
+    tfScore: '1.5',
+    scoreOutOf10: '9.5',
     gradeLabel: 'Xuất sắc',
     completedAt: '08:14 · Hôm nay',
   },
@@ -161,10 +161,10 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '18',
     fullName: 'Phạm Quốc Tuấn',
     className: '10A2',
-    correctCount: 20,
-    totalQuestions: 24,
-    mcScore: '6.0',
-    tfScore: '2.25',
+    correctCount: 9,
+    totalQuestions: 10,
+    mcScore: '7.0',
+    tfScore: '1.25',
     scoreOutOf10: '8.25',
     gradeLabel: 'Giỏi',
     completedAt: '08:05 · Hôm nay',
@@ -174,11 +174,11 @@ const DEMO_RECORDS: StudentAttemptRecord[] = [
     rollNumber: '12',
     fullName: 'Bùi Thanh Hà',
     className: '10A2',
-    correctCount: 19,
-    totalQuestions: 24,
-    mcScore: '5.7',
-    tfScore: '2.0',
-    scoreOutOf10: '7.7',
+    correctCount: 8,
+    totalQuestions: 10,
+    mcScore: '6.0',
+    tfScore: '1.5',
+    scoreOutOf10: '7.5',
     gradeLabel: 'Khá',
     completedAt: '08:02 · Hôm nay',
   },
@@ -387,19 +387,16 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
   };
 
   // ==================== SCORING CALCULATIONS ====================
-  // Phần I: Trắc nghiệm 7,0 điểm (mỗi câu 0,3 điểm; đúng trọn vẹn Phần I đạt tối đa 7,0 điểm)
+  // Phần I: Trắc nghiệm 8,0 điểm (8 câu, mỗi câu 1,0 điểm; tối đa 8,0 điểm)
   const totalMcQuestions = QUIZ_QUESTIONS.length;
   const answeredMcCount = Object.keys(selectedAnswers).length;
   const correctMcCount = QUIZ_QUESTIONS.reduce((acc, q) => {
     return acc + (selectedAnswers[q.id] === q.correctIndex ? 1 : 0);
   }, 0);
 
-  const rawMcPoints =
-    correctMcCount === totalMcQuestions
-      ? 7.0
-      : Math.min(7.0, Math.round(correctMcCount * 0.3 * 100) / 100);
+  const rawMcPoints = Math.min(8.0, Math.round(correctMcCount * 1.0 * 100) / 100);
 
-  // Phần II: Đúng / Sai 3,0 điểm (3 câu, mỗi câu: 1 ý = 0,1đ; 2 ý = 0,25đ; 3 ý = 0,5đ; 4 ý = 1,0đ)
+  // Phần II: Đúng / Sai 2,0 điểm (2 câu, mỗi câu 1,0đ: 1 ý = 0,1đ; 2 ý = 0,25đ; 3 ý = 0,5đ; 4 ý = 1,0đ)
   const totalTfQuestions = TRUE_FALSE_QUESTIONS.length;
   const answeredTfCount = countCompletedTrueFalseQuestions(tfAnswers);
 
@@ -431,7 +428,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
 
   const rawTfPoints = useMemo(() => {
     const sum = tfQuestionResults.reduce((acc, item) => acc + item.points, 0);
-    return Math.min(3.0, Math.round(sum * 100) / 100);
+    return Math.min(2.0, Math.round(sum * 100) / 100);
   }, [tfQuestionResults]);
 
   const perfectTfCount = tfQuestionResults.filter(
@@ -442,7 +439,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
     0
   );
 
-  // Tổng hợp toàn đề (Thang điểm 10 = Phần I (7đ) + Phần II (3đ))
+  // Tổng hợp toàn đề (Thang điểm 10 = Phần I (8đ) + Phần II (2đ))
   const totalQuestions = totalMcQuestions + totalTfQuestions;
   const answeredCount = answeredMcCount + answeredTfCount;
   const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
@@ -458,7 +455,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
   const skillBreakdown = useMemo(() => {
     const groups = [
       {
-        title: '1. Phần I · a) Thông hiểu (Câu 1 – 8)',
+        title: '1. Phần I · a) Thông hiểu (Câu 1 – 4)',
         correct: QUIZ_QUESTIONS.filter(
           (q) => q.sectionCode === 'a' && selectedAnswers[q.id] === q.correctIndex
         ).length,
@@ -466,7 +463,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
         unit: 'câu',
       },
       {
-        title: '2. Phần I · b) Vận dụng (Câu 9 – 15)',
+        title: '2. Phần I · b) Vận dụng (Câu 5 – 8)',
         correct: QUIZ_QUESTIONS.filter(
           (q) => q.sectionCode === 'b' && selectedAnswers[q.id] === q.correctIndex
         ).length,
@@ -474,15 +471,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
         unit: 'câu',
       },
       {
-        title: '3. Phần I · c) Vận dụng cao (Câu 16 – 21)',
-        correct: QUIZ_QUESTIONS.filter(
-          (q) => q.sectionCode === 'c' && selectedAnswers[q.id] === q.correctIndex
-        ).length,
-        total: QUIZ_QUESTIONS.filter((q) => q.sectionCode === 'c').length,
-        unit: 'câu',
-      },
-      {
-        title: '4. Phần II · Trắc nghiệm Đúng / Sai (3 câu · 12 ý)',
+        title: '3. Phần II · Trắc nghiệm Đúng / Sai (2 câu · 8 ý)',
         correct: totalCorrectStatementsInTf,
         total: TRUE_FALSE_QUESTIONS.length * 4,
         unit: 'ý',
@@ -546,8 +535,8 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
       'STT',
       'Họ và tên học sinh',
       'Lớp',
-      'Điểm Trắc nghiệm (7đ)',
-      'Điểm Đúng/Sai (3đ)',
+      'Điểm Trắc nghiệm (8đ)',
+      'Điểm Đúng/Sai (2đ)',
       'Tổng điểm (Thang 10)',
       'Xếp loại',
       'Thời gian nộp bài',
@@ -653,14 +642,14 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
               <div className="inline-flex items-center gap-2 text-xs font-extrabold text-sky-700">
                 <Trophy className="w-4 h-4" />
                 <span>
-                  Đề Kiểm Tra Hóa Học 10 Chuẩn Mới · Thang điểm 10 (7,0đ Trắc nghiệm + 3,0đ Đúng/Sai)
+                  Đề Kiểm Tra Hóa Học 10 Chuẩn Mới · Thang điểm 10 (8,0đ Trắc nghiệm + 2,0đ Đúng/Sai)
                 </span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
                 Đăng nhập Tài khoản Học sinh để bắt đầu làm bài
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Cấu trúc bài tập gồm <strong>Phần I: Trắc nghiệm 4 lựa chọn (7,0 điểm · 0,3đ/câu)</strong> chia theo 3 mức độ <em>Thông hiểu – Vận dụng – Vận dụng cao</em> và <strong>Phần II: Trắc nghiệm Đúng / Sai (3,0 điểm · 3 câu)</strong> chấm theo bậc điểm <strong>0,1đ – 0,25đ – 0,5đ – 1,0đ</strong>.
+                Cấu trúc bài tập gồm <strong>Phần I: Trắc nghiệm 4 lựa chọn (8,0 điểm · 1,0đ/câu)</strong> chia theo 2 mức độ <em>Thông hiểu – Vận dụng</em> và <strong>Phần II: Trắc nghiệm Đúng / Sai (2,0 điểm · 2 câu lớn)</strong> chấm theo bậc điểm <strong>0,1đ – 0,25đ – 0,5đ – 1,0đ</strong>.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -670,11 +659,11 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                       I. Trắc nghiệm ({totalMcQuestions} câu)
                     </span>
                     <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-sky-200/80 text-sky-950">
-                      7,0 điểm
+                      8,0 điểm
                     </span>
                   </div>
                   <div className="text-xs text-sky-800 leading-relaxed">
-                    Mỗi câu <strong>0,3 điểm</strong> (Đúng hết đạt 7,0đ): gồm {thongHieuCount} câu Thông hiểu, {vanDungCount} câu Vận dụng, {vanDungCaoCount} câu Vận dụng cao.
+                    Mỗi câu đúng được <strong>1,0 điểm</strong>: gồm {thongHieuCount} câu Thông hiểu và {vanDungCount} câu Vận dụng.
                   </div>
                 </div>
 
@@ -684,7 +673,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                       II. Đúng / Sai ({totalTfQuestions} câu)
                     </span>
                     <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded bg-amber-200/80 text-amber-950">
-                      3,0 điểm
+                      2,0 điểm
                     </span>
                   </div>
                   <div className="text-xs text-amber-800 leading-relaxed">
@@ -828,14 +817,14 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                   <div>
                     <span className="text-slate-500 block">I. Trắc nghiệm</span>
                     <span className="font-mono text-sm font-extrabold text-sky-700 tabular-nums">
-                      {mcScoreStr} / 7,0 đ
+                      {mcScoreStr} / 8,0 đ
                     </span>
                   </div>
                   <div className="h-7 w-px bg-slate-200" />
                   <div>
                     <span className="text-slate-500 block">II. Đúng / Sai</span>
                     <span className="font-mono text-sm font-extrabold text-amber-700 tabular-nums">
-                      {tfScoreStr} / 3,0 đ
+                      {tfScoreStr} / 2,0 đ
                     </span>
                   </div>
                   <div className="h-7 w-px bg-slate-200" />
@@ -885,9 +874,9 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                 <div className="flex items-center gap-2">
                   <ListChecks className="w-4 h-4 text-sky-700 shrink-0" />
                   <span className="text-slate-800">
-                    <strong>Phần I. Trắc nghiệm (7,0 điểm):</strong> Mỗi câu đúng được{' '}
-                    <strong className="font-mono text-sky-800">0,3 điểm</strong> (Đúng cả {totalMcQuestions} câu đạt tối đa{' '}
-                    <strong className="font-mono text-sky-800">7,0 điểm</strong>).
+                    <strong>Phần I. Trắc nghiệm (8,0 điểm):</strong> Mỗi câu đúng được{' '}
+                    <strong className="font-mono text-sky-800">1,0 điểm</strong> (Đúng cả {totalMcQuestions} câu đạt tối đa{' '}
+                    <strong className="font-mono text-sky-800">8,0 điểm</strong>).
                   </span>
                 </div>
                 <span className="font-mono font-extrabold text-sky-800 shrink-0">
@@ -899,7 +888,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                 <div className="flex items-center gap-2">
                   <CheckSquare className="w-4 h-4 text-amber-700 shrink-0" />
                   <span className="text-slate-800">
-                    <strong>Phần II. Đúng / Sai (3,0 điểm):</strong> Đúng 1 ý:{' '}
+                    <strong>Phần II. Đúng / Sai (2,0 điểm):</strong> Đúng 1 ý:{' '}
                     <strong className="font-mono text-amber-900">0,1đ</strong> · 2 ý:{' '}
                     <strong className="font-mono text-amber-900">0,25đ</strong> · 3 ý:{' '}
                     <strong className="font-mono text-amber-900">0,5đ</strong> · 4 ý:{' '}
@@ -984,7 +973,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                         }, 50);
                       }}
                       title={`Phần I - Câu ${q.id} (${q.level}): ${
-                        !isDone ? 'Chưa làm' : isRight ? 'Đúng (+0,3đ)' : 'Sai (0đ)'
+                        !isDone ? 'Chưa làm' : isRight ? 'Đúng (+1,0đ)' : 'Sai (0đ)'
                       }`}
                       className={`w-7 h-7 rounded-lg font-mono text-[11px] font-bold border transition-all cursor-pointer flex items-center justify-center ${
                         !isDone
@@ -1048,11 +1037,11 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
               {(
                 [
                   { id: 'ALL', label: `Toàn bộ đề (${totalQuestions} câu · 10đ)` },
-                  { id: 'PART_1', label: `I. Trắc nghiệm (${totalMcQuestions} câu · 7đ)` },
+                  { id: 'PART_1', label: `I. Trắc nghiệm (${totalMcQuestions} câu · 8đ)` },
                   { id: 'Thông hiểu', label: `a) Thông hiểu (${thongHieuCount} câu)` },
                   { id: 'Vận dụng', label: `b) Vận dụng (${vanDungCount} câu)` },
-                  { id: 'Vận dụng cao', label: `c) Vận dụng cao (${vanDungCaoCount} câu)` },
-                  { id: 'PART_2', label: `II. Đúng / Sai (${totalTfQuestions} câu · 3đ)` },
+                  ...(vanDungCaoCount > 0 ? [{ id: 'Vận dụng cao' as const, label: `c) Vận dụng cao (${vanDungCaoCount} câu)` }] : []),
+                  { id: 'PART_2', label: `II. Đúng / Sai (${totalTfQuestions} câu · 2đ)` },
                 ] as const
               ).map((tab) => (
                 <button
@@ -1071,7 +1060,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
             </div>
           </div>
 
-          {/* ==================== PHẦN I: TRẮC NGHIỆM (7,0 ĐIỂM) ==================== */}
+          {/* ==================== PHẦN I: TRẮC NGHIỆM (8,0 ĐIỂM) ==================== */}
           {showPart1 && (
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -1080,15 +1069,15 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                     Phần I · Trắc nghiệm 4 phương án lựa chọn (A, B, C, D)
                   </div>
                   <h3 className="font-display text-lg sm:text-xl font-extrabold text-white">
-                    I. Trắc nghiệm ({totalMcQuestions} câu · Tối đa 7,0 điểm)
+                    I. Trắc nghiệm ({totalMcQuestions} câu · Tối đa 8,0 điểm)
                   </h3>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 font-mono font-bold text-sky-200">
-                    Mỗi câu đúng: +0,3 điểm
+                    Mỗi câu đúng: +1,0 điểm
                   </span>
                   <span className="px-3 py-1.5 rounded-xl bg-sky-400 text-slate-950 font-mono font-extrabold">
-                    Điểm Phần I: {mcScoreStr} / 7,0 đ
+                    Điểm Phần I: {mcScoreStr} / 8,0 đ
                   </span>
                 </div>
               </div>
@@ -1105,10 +1094,8 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
 
                 const sectionHeaderTitle =
                   q.sectionCode === 'a'
-                    ? 'a) Thông hiểu (Câu 1 – Câu 8)'
-                    : q.sectionCode === 'b'
-                    ? 'b) Vận dụng (Câu 9 – Câu 15)'
-                    : 'c) Vận dụng cao (Câu 16 – Câu 21)';
+                    ? 'a) Thông hiểu (Câu 1 – Câu 4)'
+                    : 'b) Vận dụng (Câu 5 – Câu 8)';
 
                 return (
                   <React.Fragment key={q.id}>
@@ -1147,7 +1134,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                               {isCorrect ? (
                                 <>
                                   <CheckCircle2 className="w-4 h-4" />
-                                  <span>Chính xác! (+0,3 điểm)</span>
+                                  <span>Chính xác! (+1,0 điểm)</span>
                                 </>
                               ) : (
                                 <>
@@ -1241,7 +1228,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
             </div>
           )}
 
-          {/* ==================== PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (3,0 ĐIỂM) ==================== */}
+          {/* ==================== PHẦN II: TRẮC NGHIỆM ĐÚNG / SAI (2,0 ĐIỂM) ==================== */}
           {showPart2 && (
             <div className="space-y-4 pt-2">
               <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -1250,7 +1237,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                     Phần II · Câu trắc nghiệm Đúng / Sai (Mỗi câu gồm 4 ý a, b, c, d)
                   </div>
                   <h3 className="font-display text-lg sm:text-xl font-extrabold text-white">
-                    II. Trắc nghiệm Đúng / Sai ({totalTfQuestions} câu · Tối đa 3,0 điểm)
+                    II. Trắc nghiệm Đúng / Sai ({totalTfQuestions} câu · Tối đa 2,0 điểm)
                   </h3>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -1258,7 +1245,7 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                     1 ý: 0,1đ · 2 ý: 0,25đ · 3 ý: 0,5đ · 4 ý: 1,0đ
                   </span>
                   <span className="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-mono font-extrabold">
-                    Điểm Phần II: {tfScoreStr} / 3,0 đ
+                    Điểm Phần II: {tfScoreStr} / 2,0 đ
                   </span>
                 </div>
               </div>
@@ -1784,8 +1771,8 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                   <th className="py-2.5 px-3 font-semibold">STT</th>
                   <th className="py-2.5 px-3 font-semibold">Họ và tên học sinh</th>
                   <th className="py-2.5 px-3 font-semibold">Lớp</th>
-                  <th className="py-2.5 px-3 font-semibold">I. Trắc nghiệm (7đ)</th>
-                  <th className="py-2.5 px-3 font-semibold">II. Đúng/Sai (3đ)</th>
+                  <th className="py-2.5 px-3 font-semibold">I. Trắc nghiệm (8đ)</th>
+                  <th className="py-2.5 px-3 font-semibold">II. Đúng/Sai (2đ)</th>
                   <th className="py-2.5 px-3 font-semibold">Tổng điểm</th>
                   <th className="py-2.5 px-3 font-semibold">Xếp loại</th>
                   <th className="py-2.5 px-3 font-semibold">Thời gian</th>
@@ -1805,10 +1792,10 @@ export const StudentQuizSection: React.FC<StudentQuizSectionProps> = ({
                         {item.className}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-sky-700 font-bold">
-                        {item.mcScore ? `${item.mcScore} / 7.0` : '-'}
+                        {item.mcScore ? `${item.mcScore} / 8.0` : '-'}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-amber-700 font-bold">
-                        {item.tfScore ? `${item.tfScore} / 3.0` : '-'}
+                        {item.tfScore ? `${item.tfScore} / 2.0` : '-'}
                       </td>
                       <td className="py-2.5 px-3 font-mono font-extrabold text-indigo-700">
                         {item.scoreOutOf10} / 10

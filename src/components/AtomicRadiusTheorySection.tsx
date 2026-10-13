@@ -143,7 +143,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
               onClick={onJumpToQuiz}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0"
             >
-              <span>Làm bài tập vận dụng (21 câu TN + 3 câu Đ/S)</span>
+              <span>Làm bài tập vận dụng (8 câu TN + 2 câu Đ/S)</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -1207,7 +1207,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                           }`}
                         >
                           <div className="font-display text-base font-extrabold">{el.symbol}</div>
-                          <div className="text-[11px] opacity-80">{el.vietnameseName}</div>
+                          <div className="text-[11px] opacity-80">{el.name}</div>
                           <div className="font-mono text-[10px] mt-1 opacity-90">
                             R={el.atomicRadius}pm · χ={el.electronegativity}
                           </div>

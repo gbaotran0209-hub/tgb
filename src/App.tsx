@@ -435,7 +435,7 @@ export default function App() {
                   activeTab === 'quiz' ? 'text-slate-300' : 'text-slate-500'
                 }`}
               >
-                Đăng nhập Họ tên · Lớp · STT, làm đề 10 điểm (I. Trắc nghiệm 7đ + II. Đúng/Sai 3đ), Bảng xếp hạng Top 5 & Xuất Excel.
+                Đăng nhập Họ tên · Lớp · STT, làm đề 10 điểm (I. Trắc nghiệm 8đ + II. Đúng/Sai 2đ), Bảng xếp hạng Top 5 & Xuất Excel.
               </p>
             </div>
           </button>

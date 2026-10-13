@@ -445,7 +445,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-bold text-slate-700 mr-1 inline-flex items-center gap-1">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>Bấm chọn nhanh nguyên tố:</span>
+                <span>Bấm chọn nhanh nguyên tố (Chuẩn IUPAC quốc tế):</span>
               </span>
               {QUICK_SPOTLIGHT_Z.map((z) => {
                 const el = ELEMENT_BY_Z[z];
@@ -455,6 +455,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                     key={z}
                     type="button"
                     onClick={() => handleElementClick(el)}
+                    title={`Tên IUPAC quốc tế: ${el.name} (Tên cũ: ${el.vietnameseName}) · Z = ${el.atomicNumber}`}
                     className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-mono font-bold transition-all cursor-pointer ${
                       active
                         ? 'bg-slate-900 text-white shadow-xs scale-105'
@@ -463,7 +464,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                         : 'bg-pink-100/80 text-rose-900 hover:bg-pink-200'
                     }`}
                   >
-                    {el.symbol} ({el.vietnameseName})
+                    {el.symbol} ({el.name})
                   </button>
                 );
               })}
