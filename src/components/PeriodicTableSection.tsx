@@ -246,34 +246,35 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
         return `bg-slate-900/90 border-slate-700 text-slate-300 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
       if (r >= 220) {
-        return `bg-indigo-500 border-sky-300 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+        return `bg-indigo-950 border-indigo-400 text-white font-bold ring-1 ring-indigo-400 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
       if (r >= 180) {
-        return `bg-indigo-600 border-indigo-300 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+        return `bg-indigo-900 border-indigo-500 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
       if (r >= 150) {
-        return `bg-indigo-700 border-indigo-400 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+        return `bg-indigo-700 border-indigo-500 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
       if (r >= 125) {
-        return `bg-indigo-900/95 border-indigo-400/80 text-indigo-100 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+        return `bg-indigo-600/80 border-indigo-500 text-indigo-100 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
       if (r >= 95) {
-        return `bg-indigo-950/90 border-indigo-500/60 text-indigo-200 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+        return `bg-indigo-800/60 border-indigo-600/50 text-indigo-200 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
       }
-      return `bg-slate-950/95 border-indigo-500/40 text-slate-200 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+      return `bg-slate-900/70 border-slate-700 text-slate-300 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
 
     if (!r) {
       return `bg-slate-100 border-slate-200 text-slate-700 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
+    // Light mode: Strictly increasing depth from very light (<95) to darkest (>=220)
     if (r >= 220) {
-      return `bg-indigo-950 border-indigo-900 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+      return `bg-indigo-950 border-indigo-950 text-white font-bold ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
     if (r >= 180) {
-      return `bg-indigo-800 border-indigo-700 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+      return `bg-indigo-800 border-indigo-800 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
     if (r >= 150) {
-      return `bg-indigo-600 border-indigo-500 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+      return `bg-indigo-600 border-indigo-600 text-white ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
     if (r >= 125) {
       return `bg-indigo-300 border-indigo-400 text-slate-950 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
@@ -281,7 +282,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
     if (r >= 95) {
       return `bg-indigo-100 border-indigo-200 text-slate-900 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
     }
-    return `bg-indigo-50/80 border-indigo-200/70 text-slate-900 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
+    return `bg-indigo-50 border-indigo-200 text-slate-800 ${heatmapHoverShadow} ${selectedRing} ${dimmed}`;
   };
 
   const categoryLabel = (cat: ElementCategory) => {
@@ -410,7 +411,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
               isDarkCell ? 'text-white' : 'text-slate-950'
             }`}
           >
-            {el.vietnameseName}
+            {el.name}
           </div>
           {!isCompactMobileTable && (
             <div
@@ -773,7 +774,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 <span
                   className={`px-2 py-1 rounded-md border font-mono text-[11px] ${
                     isDarkMode
-                      ? 'bg-slate-950 border-indigo-500/40 text-slate-200'
+                      ? 'bg-slate-900 border-slate-700 text-slate-300'
                       : 'bg-indigo-50 border-indigo-200 text-slate-800'
                   }`}
                 >
@@ -782,7 +783,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 <span
                   className={`px-2 py-1 rounded-md border font-mono text-[11px] ${
                     isDarkMode
-                      ? 'bg-indigo-950 border-indigo-500/60 text-indigo-200'
+                      ? 'bg-indigo-800/60 border-indigo-600/50 text-indigo-200'
                       : 'bg-indigo-100 border-indigo-200 text-slate-900'
                   }`}
                 >
@@ -791,20 +792,38 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                 <span
                   className={`px-2 py-1 rounded-md border font-mono text-[11px] font-bold ${
                     isDarkMode
-                      ? 'bg-indigo-900 border-indigo-400/80 text-indigo-100'
+                      ? 'bg-indigo-600/80 border-indigo-500 text-indigo-100'
                       : 'bg-indigo-300 border-indigo-400 text-slate-950'
                   }`}
                 >
                   125–149 pm
                 </span>
-                <span className="px-2 py-1 rounded-md bg-indigo-700 border border-indigo-500 text-white font-mono text-[11px]">
+                <span
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] font-bold text-white ${
+                    isDarkMode
+                      ? 'bg-indigo-700 border-indigo-500'
+                      : 'bg-indigo-600 border-indigo-600'
+                  }`}
+                >
                   150–179 pm
                 </span>
-                <span className="px-2 py-1 rounded-md bg-indigo-600 border border-indigo-400 text-white font-mono text-[11px]">
+                <span
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] font-bold text-white ${
+                    isDarkMode
+                      ? 'bg-indigo-900 border-indigo-500'
+                      : 'bg-indigo-800 border-indigo-800'
+                  }`}
+                >
                   180–219 pm
                 </span>
-                <span className="px-2 py-1 rounded-md bg-indigo-500 border border-sky-300 text-white font-mono text-[11px] font-bold">
-                  ≥ 220 pm (Rất lớn)
+                <span
+                  className={`px-2 py-1 rounded-md border font-mono text-[11px] font-extrabold text-white shadow-xs ${
+                    isDarkMode
+                      ? 'bg-indigo-950 border-indigo-400 ring-1 ring-indigo-400'
+                      : 'bg-indigo-950 border-indigo-950'
+                  }`}
+                >
+                  ≥ 220 pm (Lớn nhất)
                 </span>
               </div>
               <div className="text-slate-600 font-medium text-[11px] sm:text-xs">
@@ -1291,6 +1310,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                     {Array.from({ length: 18 }, (_, i) => i + 1).map((col) => {
                       if (period === 6 && col === 3) {
                         const isLanthanideSelected = selectedElement?.fBlockRow === 'lanthanide';
+                        const isMarkerDimmed = filterMode === 'nonmetal' || filterMode === 'metal' || filterMode === 'noble_gas';
                         return (
                           <button
                             key="lanthanide-marker"
@@ -1299,7 +1319,9 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                             className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 cursor-pointer ${
                               isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'
                             } ${
-                              isLanthanideSelected
+                              isMarkerDimmed
+                                ? 'opacity-20 saturate-0 scale-95 pointer-events-none bg-slate-100 border-slate-200 text-slate-400'
+                                : isLanthanideSelected
                                 ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
                                 : isDarkMode
                                 ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'
@@ -1319,6 +1341,7 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
 
                       if (period === 7 && col === 3) {
                         const isActinideSelected = selectedElement?.fBlockRow === 'actinide';
+                        const isMarkerDimmed = filterMode === 'nonmetal' || filterMode === 'metal' || filterMode === 'noble_gas';
                         return (
                           <button
                             key="actinide-marker"
@@ -1327,7 +1350,9 @@ export const PeriodicTableSection: React.FC<PeriodicTableSectionProps> = ({
                             className={`element-tile-shimmer flex flex-col items-center justify-center p-1 rounded-lg border text-center transition-all duration-200 ease-out hover:scale-[1.12] hover:-translate-y-1 hover:shadow-lg hover:z-30 cursor-pointer ${
                               isCompactMobileTable ? 'min-h-[46px] sm:min-h-[66px]' : 'min-h-[56px] sm:min-h-[66px]'
                             } ${
-                              isActinideSelected
+                              isMarkerDimmed
+                                ? 'opacity-20 saturate-0 scale-95 pointer-events-none bg-slate-100 border-slate-200 text-slate-400'
+                                : isActinideSelected
                                 ? 'bg-emerald-700 text-white border-emerald-400 ring-2 ring-white'
                                 : isDarkMode
                                 ? 'bg-emerald-950/90 border-emerald-500/80 text-emerald-200 hover:border-emerald-300'

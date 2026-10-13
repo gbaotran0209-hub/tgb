@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ELEMENTS, ELEMENT_BY_SYMBOL, ChemicalElement } from '../data/elements';
-import { WORKED_EXAMPLES } from '../data/questions';
+import { AtomicRadiusSortingGame } from './AtomicRadiusSortingGame';
 import {
   ArrowRight,
   ArrowDown,
@@ -10,10 +10,12 @@ import {
   BookOpen,
   Scale,
   CheckCircle2,
+  XCircle,
   Eye,
   Atom,
   Zap,
   Layers,
+  Sparkles,
 } from 'lucide-react';
 
 interface AtomicRadiusTheorySectionProps {
@@ -25,10 +27,8 @@ interface AtomicRadiusTheorySectionProps {
 type TheorySubTab =
   | 'overview_table'
   | 'what_is_it'
-  | 'how_it_changes'
   | 'explanation'
-  | 'examples'
-  | 'ion_lab'
+  | 'sorting_practice'
   | 'periodic_links';
 
 type ChartDimension = 'period' | 'groupA';
@@ -36,141 +36,8 @@ type ChartDimension = 'period' | 'groupA';
 const GROUP_A_LIST = ['IA', 'IIA', 'IIIA', 'IVA', 'VA', 'VIA', 'VIIA'] as const;
 const PERIOD_LIST = [2, 3, 4, 5, 6] as const;
 
-const POPULAR_COMPARE_SYMBOLS = [
-  'Li', 'Be', 'B', 'C', 'N', 'O', 'F',
-  'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl',
-  'K', 'Ca', 'Br', 'Rb', 'Sr', 'I', 'Cs', 'Ba',
-];
 
-interface IonTransformData {
-  symbol: string;
-  name: string;
-  viName: string;
-  z: number;
-  type: 'cation' | 'anion';
-  actionLabel: string;
-  ionSymbol: string;
-  atomConfig: string;
-  ionConfig: string;
-  atomShells: number[];
-  ionShells: number[];
-  atomRadius: number;
-  ionRadius: number;
-  explanation: string;
-}
 
-const ION_LAB_ITEMS: IonTransformData[] = [
-  {
-    symbol: 'Na',
-    name: 'Sodium',
-    viName: 'Natri',
-    z: 11,
-    type: 'cation',
-    actionLabel: 'Nhường 1e (Tạo cation Na⁺)',
-    ionSymbol: 'Na⁺',
-    atomConfig: '1s² 2s² 2p⁶ 3s¹',
-    ionConfig: '1s² 2s² 2p⁶ (Giống Ne)',
-    atomShells: [2, 8, 1],
-    ionShells: [2, 8],
-    atomRadius: 186,
-    ionRadius: 102,
-    explanation:
-      'Nguyên tử Na nhường 1e ở lớp thứ 3 (3s¹) để tạo ion dương Na⁺. Lúc này Na⁺ mất hẳn lớp vỏ thứ 3 (chỉ còn 2 lớp e), đồng thời hạt nhân (+11) hút 10e còn lại mạnh hơn nên bán kính co rút mạnh từ 186 pm xuống 102 pm: R(Na⁺) < R(Na).',
-  },
-  {
-    symbol: 'Mg',
-    name: 'Magnesium',
-    viName: 'Magiê',
-    z: 12,
-    type: 'cation',
-    actionLabel: 'Nhường 2e (Tạo cation Mg²⁺)',
-    ionSymbol: 'Mg²⁺',
-    atomConfig: '1s² 2s² 2p⁶ 3s²',
-    ionConfig: '1s² 2s² 2p⁶ (Giống Ne)',
-    atomShells: [2, 8, 2],
-    ionShells: [2, 8],
-    atomRadius: 160,
-    ionRadius: 72,
-    explanation:
-      'Nguyên tử Mg nhường 2e lớp ngoài cùng (3s²) tạo cation Mg²⁺. Số lớp electron giảm từ 3 lớp xuống 2 lớp và điện tích hạt nhân +12 hút chặt 10e còn lại nên bán kính giảm hơn một nửa (từ 160 pm xuống 72 pm): R(Mg²⁺) < R(Mg).',
-  },
-  {
-    symbol: 'Al',
-    name: 'Aluminium',
-    viName: 'Nhôm',
-    z: 13,
-    type: 'cation',
-    actionLabel: 'Nhường 3e (Tạo cation Al³⁺)',
-    ionSymbol: 'Al³⁺',
-    atomConfig: '1s² 2s² 2p⁶ 3s² 3p¹',
-    ionConfig: '1s² 2s² 2p⁶ (Giống Ne)',
-    atomShells: [2, 8, 3],
-    ionShells: [2, 8],
-    atomRadius: 143,
-    ionRadius: 54,
-    explanation:
-      'Nguyên tử Al nhường 3e hóa trị tạo cation Al³⁺. Mất lớp electron thứ 3 và điện tích hạt nhân lớn (+13) kéo 10e lại rất sát hạt nhân, làm bán kính giảm từ 143 pm xuống chỉ còn 54 pm: R(Al³⁺) < R(Al).',
-  },
-  {
-    symbol: 'Cl',
-    name: 'Chlorine',
-    viName: 'Clo',
-    z: 17,
-    type: 'anion',
-    actionLabel: 'Nhận thêm 1e (Tạo anion Cl⁻)',
-    ionSymbol: 'Cl⁻',
-    atomConfig: '[Ne] 3s² 3p⁵',
-    ionConfig: '[Ne] 3s² 3p⁶ (Giống Ar)',
-    atomShells: [2, 8, 7],
-    ionShells: [2, 8, 8],
-    atomRadius: 99,
-    ionRadius: 181,
-    explanation:
-      'Nguyên tử Cl nhận thêm 1e vào lớp ngoài cùng để đạt 8e bền vững (tạo anion Cl⁻). Điện tích hạt nhân vẫn là +17 nhưng lực đẩy giữa các electron trong đám mây tăng lên làm lớp vỏ phình to từ 99 pm lên 181 pm: R(Cl⁻) > R(Cl).',
-  },
-  {
-    symbol: 'F',
-    name: 'Fluorine',
-    viName: 'Flo',
-    z: 9,
-    type: 'anion',
-    actionLabel: 'Nhận thêm 1e (Tạo anion F⁻)',
-    ionSymbol: 'F⁻',
-    atomConfig: '1s² 2s² 2p⁵',
-    ionConfig: '1s² 2s² 2p⁶ (Giống Ne)',
-    atomShells: [2, 8],
-    ionShells: [2, 8],
-    atomRadius: 64,
-    ionRadius: 133,
-    explanation:
-      'Nguyên tử F nhận thêm 1e tạo anion F⁻ (có 10e). Do số electron tăng lên mà điện tích hạt nhân (+9) giữ nguyên nên lực đẩy nội tại giữa các electron tăng, làm bán kính tăng gấp đôi từ 64 pm lên 133 pm: R(F⁻) > R(F).',
-  },
-  {
-    symbol: 'O',
-    name: 'Oxygen',
-    viName: 'Oxi',
-    z: 8,
-    type: 'anion',
-    actionLabel: 'Nhận thêm 2e (Tạo anion O²⁻)',
-    ionSymbol: 'O²⁻',
-    atomConfig: '1s² 2s² 2p⁴',
-    ionConfig: '1s² 2s² 2p⁶ (Giống Ne)',
-    atomShells: [2, 6],
-    ionShells: [2, 8],
-    atomRadius: 66,
-    ionRadius: 140,
-    explanation:
-      'Nguyên tử O nhận thêm 2e vào lớp L tạo anion O²⁻. Lực đẩy giữa 10 electron lớn hơn nhiều so với khi chỉ có 8 electron, khiến bán kính tăng mạnh từ 66 pm lên 140 pm: R(O²⁻) > R(O).',
-  },
-];
-
-const ISOELECTRONIC_10E = [
-  { label: 'O²⁻', z: 8, electrons: 10, radius: 140, config: '1s² 2s² 2p⁶', role: 'Anion 2-' },
-  { label: 'F⁻', z: 9, electrons: 10, radius: 133, config: '1s² 2s² 2p⁶', role: 'Anion 1-' },
-  { label: 'Na⁺', z: 11, electrons: 10, radius: 102, config: '1s² 2s² 2p⁶', role: 'Cation 1+' },
-  { label: 'Mg²⁺', z: 12, electrons: 10, radius: 72, config: '1s² 2s² 2p⁶', role: 'Cation 2+' },
-  { label: 'Al³⁺', z: 13, electrons: 10, radius: 54, config: '1s² 2s² 2p⁶', role: 'Cation 3+' },
-];
 
 export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps> = ({
   onSelectElementOnTable,
@@ -178,6 +45,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
   onJumpToQuiz,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<TheorySubTab>('overview_table');
+  const [periodObservationAnswer, setPeriodObservationAnswer] = useState<string | null>(null);
 
   // Interactive Chart state
   const [chartDimension, setChartDimension] = useState<ChartDimension>('period');
@@ -188,12 +56,7 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
   const [simMode, setSimMode] = useState<'period2' | 'period3' | 'groupIA' | 'groupVIIA'>('period3');
   const [simStepIndex, setSimStepIndex] = useState<number>(0);
 
-  // Interactive Multi-Element Comparator state (for Examples tab)
-  const [compareSymbols, setCompareSymbols] = useState<string[]>(['Na', 'Mg', 'Al', 'K']);
 
-  // Ion Lab state (Idea 1)
-  const [selectedIonIdx, setSelectedIonIdx] = useState<number>(0);
-  const [isIonized, setIsIonized] = useState<boolean>(false);
 
   // Synchronized Periodic Trends state (Idea 4)
   const [syncTrendMode, setSyncTrendMode] = useState<'period3' | 'period2' | 'groupIA' | 'groupVIIA'>('period3');
@@ -251,31 +114,6 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
   const currentSyncElement =
     syncSequence[Math.min(syncElementIdx, syncSequence.length - 1)] ?? syncSequence[0];
 
-  const toggleCompareSymbol = (sym: string) => {
-    setCompareSymbols((prev) => {
-      if (prev.includes(sym)) {
-        if (prev.length <= 2) return prev;
-        return prev.filter((s) => s !== sym);
-      }
-      if (prev.length >= 6) return prev;
-      return [...prev, sym];
-    });
-  };
-
-  const comparedElementsAsc = useMemo(() => {
-    return compareSymbols
-      .map((s) => ELEMENT_BY_SYMBOL[s])
-      .filter((el): el is ChemicalElement => Boolean(el && el.atomicRadius !== null))
-      .sort((a, b) => (a.atomicRadius ?? 0) - (b.atomicRadius ?? 0));
-  }, [compareSymbols]);
-
-  const comparedElementsDesc = useMemo(() => {
-    return [...comparedElementsAsc].reverse();
-  }, [comparedElementsAsc]);
-
-  const currentIonItem = ION_LAB_ITEMS[selectedIonIdx] ?? ION_LAB_ITEMS[0];
-  const activeShells = isIonized ? currentIonItem.ionShells : currentIonItem.atomShells;
-  const activeRadius = isIonized ? currentIonItem.ionRadius : currentIonItem.atomRadius;
 
   return (
     <div className="space-y-6">
@@ -312,50 +150,38 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
         </div>
 
         {/* Interactive Sub-Section Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {(
             [
               {
                 id: 'overview_table',
-                step: 'Trọn bộ Đề cương Lý thuyết',
-                title: 'I. Bảng tuần hoàn & II. Bán kính nguyên tử',
-                desc: 'Toàn bộ nội dung Phần I (Nguyên tắc, Ô, Chu kì, Nhóm) & Phần II (Khái niệm, Quy luật, Giải thích, Năng lượng ion hóa I₁)',
+                step: 'Mục I · Bảng tuần hoàn',
+                title: 'I. Sơ lược Bảng tuần hoàn',
+                desc: 'Nguyên tắc sắp xếp, Ô nguyên tử, Chu kì (1–7), Nhóm A & Nhóm B kèm bảng ví dụ cấu hình e xác định nhóm',
               },
               {
                 id: 'what_is_it',
-                step: 'Mô hình trực quan II.1',
-                title: 'Sơ đồ đo Bán kính (r = d/2)',
-                desc: 'Khái niệm, đơn vị đo Picomet (pm) / Angstrom (Å) & mô hình xác định r = d/2',
-              },
-              {
-                id: 'how_it_changes',
-                step: 'Phần II.2 · Quy luật',
-                title: '2. Quy luật biến đổi',
-                desc: 'Xu hướng biến đổi trong 1 Chu kì (trái → phải) & trong 1 Nhóm A (trên → dưới)',
+                step: 'Mục II.1 · Khái niệm & Ví dụ',
+                title: '1. Khái niệm & Sơ đồ đo (r = d/2)',
+                desc: 'Khái niệm, sơ đồ đo r = d/2, ví dụ tính toán Cl₂, H₂, Cu & câu hỏi quan sát chu kì',
               },
               {
                 id: 'explanation',
-                step: 'Phần II.3 · Giải thích & I₁',
-                title: '3. Giải thích & Em có biết (I₁)',
-                desc: 'Giải thích quy luật bán kính & Năng lượng ion hóa thứ nhất I₁ (kJ/mol)',
+                step: 'Mục II.2 & II.3 · Quy luật & I₁',
+                title: '2–3. Quy luật, Giải thích & I₁',
+                desc: 'Xu hướng biến đổi trong Chu kì & Nhóm A, giải thích lực hút hạt nhân & Em có biết Năng lượng ion hóa I₁',
               },
               {
-                id: 'examples',
-                step: 'Mục 04 · Thực hành',
-                title: 'Ví dụ & Máy so sánh',
-                desc: '3 bài mẫu giải chi tiết & công cụ tự chọn nguyên tố so sánh',
-              },
-              {
-                id: 'ion_lab',
-                step: 'Mục 05 · Mở rộng Ion',
-                title: 'Phòng thí nghiệm Nguyên tử & Ion',
-                desc: 'Biến đổi nhường/nhận e (Na⁺, Cl⁻...) & Dãy đẳng electron 10e',
+                id: 'sorting_practice',
+                step: 'Luyện tập · Sắp xếp',
+                title: 'Bài tập sắp xếp Bán kính',
+                desc: 'Thực hành tương tác kéo/chọn và sắp xếp bán kính nguyên tử tăng dần/giảm dần có chấm điểm chi tiết',
               },
               {
                 id: 'periodic_links',
-                step: 'Mục 06 · Tổng hợp chương',
-                title: 'Liên hệ I₁, Độ âm điện & Kim loại – Phi kim',
-                desc: 'Đồng bộ quy luật Bán kính ↔ Năng lượng ion hóa I₁ ↔ Độ âm điện',
+                step: 'Tổng hợp chương',
+                title: 'Liên hệ Bán kính, I₁ & Độ âm điện',
+                desc: 'Đồng bộ 4 quy luật tuần hoàn trong 1 Chu kì và 1 Nhóm A (Bán kính ↔ I₁ ↔ Độ âm điện ↔ Kim loại/Phi kim)',
               },
             ] as { id: TheorySubTab; step: string; title: string; desc: string }[]
           ).map((item) => {
@@ -622,116 +448,13 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                   </div>
                 </div>
 
-                {/* PHẦN II: BÁN KÍNH NGUYÊN TỬ (Hiển thị liền mạch ngay bên dưới Phần I) */}
-                <div className="pt-4 border-t-2 border-slate-200 space-y-5">
-                  <div className="inline-flex items-center gap-2 text-xs font-bold text-indigo-700">
-                    <BookOpen className="w-4 h-4" />
-                    <span>II. BÁN KÍNH NGUYÊN TỬ</span>
-                  </div>
-
-                  {/* 1. Khái niệm */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/40 border border-sky-200 space-y-2.5">
-                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
-                      1. Khái niệm
-                    </h3>
-                    <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
-                      <li>
-                        Bán kính nguyên tử là một đại lượng đặc trưng cho kích thước của nguyên tử, được xác định gần đúng bằng <strong>một nửa khoảng cách trung bình giữa hai hạt nhân nguyên tử gần nhau nhất</strong> trong chất rắn đơn chất hoặc trong phân tử gồm hai nguyên tử giống nhau
-                      </li>
-                      <li>
-                        Bán kính nguyên tử phụ thuộc vào <strong>lực hút giữa hạt nhân và các electron ở lớp ngoài cùng</strong>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* 2. Quy luật biến đổi */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
-                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
-                      2. Quy luật biến đổi
-                    </h3>
-                    <div className="text-xs sm:text-sm font-bold text-slate-800">
-                      - Xu hướng biến đổi bán kính nguyên tử:
-                    </div>
-                    <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
-                      <li>
-                        <strong>Trong một chu kì (từ trái sang phải):</strong> bán kính nguyên tử <strong>giảm</strong> theo chiều tăng dần của điện tích hạt nhân
-                      </li>
-                      <li>
-                        <strong>Trong một nhóm A (từ trên xuống dưới):</strong> bán kính nguyên tử <strong>tăng</strong> theo chiều tăng dần của điện tích hạt nhân
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* 3. Giải thích */}
-                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-                    <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900">
-                      3. Giải thích
-                    </h3>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-white border border-indigo-200 space-y-2">
-                        <div className="font-bold text-xs sm:text-sm text-indigo-900">
-                          - Trong cùng 1 chu kì, bán kính nguyên tử giảm vì:
-                        </div>
-                        <ul className="space-y-1.5 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
-                          <li>Số lớp electron không đổi (bằng số chu kì)</li>
-                          <li>
-                            Điện tích hạt nhân lại tăng dẫn đến hút các electron về phía hạt nhân mạnh hơn → <strong>Bán kính nguyên tử GIẢM</strong>
-                          </li>
-                        </ul>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-white border border-sky-200 space-y-2">
-                        <div className="font-bold text-xs sm:text-sm text-sky-900">
-                          - Trong cùng 1 nhóm, bán kính nguyên tử tăng vì:
-                        </div>
-                        <ul className="space-y-1.5 text-xs sm:text-sm text-slate-800 list-disc pl-5 leading-relaxed">
-                          <li>Số lớp electron tăng dần</li>
-                          <li>
-                            Mặc dù số đơn vị điện tích hạt nhân tăng nhưng khi càng nhiều lớp electron, dẫn đến electron ngoài cùng càng xa hạt nhân, do đó lực hút giảm đi đáng kể → <strong>Bán kính nguyên tử TĂNG</strong>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* *Em có biết: Năng lượng ion hóa thứ nhất */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border border-amber-300 space-y-2.5">
-                      <h4 className="font-display text-sm sm:text-base font-extrabold text-amber-950">
-                        * Em có biết: Năng lượng ion hóa thứ nhất
-                      </h4>
-                      <ul className="space-y-2 text-xs sm:text-sm text-slate-800 leading-relaxed list-disc pl-5">
-                        <li>
-                          Năng lượng ion hóa thứ nhất của nguyên tử là năng lượng tối thiểu cần thiết để tách electron thứ nhất ra khỏi nguyên tử ở thể khí, ở trạng thái cơ bản:{' '}
-                          <strong className="font-mono text-indigo-900">X(g) → X⁺(g) + e</strong>
-                          <div className="mt-1">
-                            <strong>VD:</strong> để tách một electron ra khỏi một mol nguyên tử hydrogen theo quá trình:{' '}
-                            <span className="font-mono font-bold">H(g) → H⁺(g) + e</span> phải tiêu tốn năng lượng là 1312 kJ, do đó{' '}
-                            <strong className="font-mono text-rose-700">I₁ = 1312 kJ/mol</strong>
-                          </div>
-                        </li>
-                        <li>
-                          Năng lượng ion hóa thứ nhất kí hiệu là <strong className="font-mono">I₁</strong>, đơn vị là <strong className="font-mono">kJ/mol</strong>
-                        </li>
-                        <li>
-                          Trong 1 chu kì, bán kính nguyên tử nhìn chung giảm dần, khiến lực hút của hạt nhân lên electron ngoài cùng mạnh hơn → <strong>năng lượng ion hóa thứ nhất tăng dần</strong>
-                          <div className="mt-1 text-amber-950 font-semibold">
-                            Tuy nhiên, vẫn có một số ngoại lệ như <strong>Be - B</strong> và <strong>N - O</strong>
-                          </div>
-                        </li>
-                        <li>
-                          Trong một nhóm A, bán kính nguyên tử nhìn chung tăng dần, khoảng cách từ hạt nhân đến electron ngoài cùng lớn hơn, lực liên kết giảm → <strong>năng lượng ion hóa thứ nhất nhìn chung giảm dần</strong>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap justify-end gap-2 pt-1">
+                <div className="flex flex-wrap justify-end gap-2 pt-3 border-t border-slate-200">
                   <button
                     type="button"
-                    onClick={() => setActiveSubTab('how_it_changes')}
+                    onClick={() => setActiveSubTab('what_is_it')}
                     className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
                   >
-                    <span>Xem Biểu đồ tương tác &amp; Mô phỏng 3D</span>
+                    <span>Tiếp theo: Phần II.1. Khái niệm & Sơ đồ đo bán kính (r = d/2)</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -852,276 +575,248 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                   </svg>
                   <button
                     type="button"
-                    onClick={() => setActiveSubTab('how_it_changes')}
+                    onClick={() => setActiveSubTab('explanation')}
                     className="mt-3 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-sky-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <span>Tiếp theo: Xem quy luật biến đổi</span>
+                    <span>Xem tiếp: Quy luật & Giải thích biến đổi</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* 3 Minh họa tính toán thực tế theo công thức r = d/2 (Chuẩn SGK Hóa 10 - Hình 4) */}
+                <div className="lg:col-span-12 space-y-3 pt-4 border-t border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-lg bg-sky-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      VD
+                    </span>
+                    <div>
+                      <h4 className="font-display text-base font-extrabold text-slate-900">
+                        Ví dụ minh họa tính toán bán kính nguyên tử (Chuẩn SGK Hóa học 10)
+                      </h4>
+                      <p className="text-xs text-slate-600">
+                        Áp dụng công thức:{' '}
+                        <strong className="font-mono text-indigo-700">r = d / 2</strong>{' '}
+                        (với d là khoảng cách giữa 2 hạt nhân nguyên tử gần nhau nhất)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Ví dụ 1: Cl2 */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-display font-extrabold text-slate-900 text-sm">
+                            1. Phân tử Chlorine (Cl₂)
+                          </span>
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                            Phi kim Cl
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          Trong phân tử Cl₂, khoảng cách giữa hai hạt nhân nguyên tử Chlorine là{' '}
+                          <strong className="font-mono text-slate-900">d = 198 pm</strong>.
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white border border-emerald-300 font-mono text-xs space-y-1">
+                        <div className="text-slate-600">Bán kính nguyên tử Chlorine:</div>
+                        <div className="text-emerald-700 font-extrabold text-sm">
+                          r(Cl) = 198 / 2 = 99 pm
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ví dụ 2: H2 */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-display font-extrabold text-slate-900 text-sm">
+                            2. Phân tử Hydrogen (H₂)
+                          </span>
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold">
+                            Phi kim H
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          Trong phân tử H₂, khoảng cách giữa hai hạt nhân nguyên tử Hydrogen là{' '}
+                          <strong className="font-mono text-slate-900">d = 74 pm</strong>.
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white border border-sky-300 font-mono text-xs space-y-1">
+                        <div className="text-slate-600">Bán kính nguyên tử Hydrogen:</div>
+                        <div className="text-sky-700 font-extrabold text-sm">
+                          r(H) = 74 / 2 = 37 pm
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ví dụ 3: Cu */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 flex flex-col justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-display font-extrabold text-slate-900 text-sm">
+                            3. Tinh thể Kim loại Copper (Cu)
+                          </span>
+                          <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">
+                            Kim loại Cu
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">
+                          Trong mạng tinh thể đồng, khoảng cách giữa hai hạt nhân Copper gần nhau nhất là{' '}
+                          <strong className="font-mono text-slate-900">d = 256 pm</strong>.
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white border border-amber-300 font-mono text-xs space-y-1">
+                        <div className="text-slate-600">Bán kính nguyên tử Copper:</div>
+                        <div className="text-amber-700 font-extrabold text-sm">
+                          r(Cu) = 256 / 2 = 128 pm
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Câu hỏi quan sát hình thực nghiệm: Chu kì (Hình 5) */}
+                <div className="lg:col-span-12 space-y-4 pt-3 border-t border-slate-200">
+                  <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/80 border-2 border-indigo-200 space-y-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                          ?
+                        </span>
+                        <div>
+                          <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">
+                            Câu hỏi quan sát hình học tập (Hình 5)
+                          </span>
+                          <h4 className="font-display text-base font-extrabold text-slate-900">
+                            Quan sát hình sau và cho biết trong cùng 1 chu kì thì độ lớn của bán kính các nguyên tử như thế nào?
+                          </h4>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-slate-500">
+                        Ví dụ thực nghiệm: Chu kì 3 (Na → Cl)
+                      </span>
+                    </div>
+
+                    {/* Graphic illustration of Period 3 Elements with proportional radius circles */}
+                    <div className="bg-white rounded-xl border border-indigo-100 p-4">
+                      <div className="text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
+                        <span>Sơ đồ kích thước nguyên tử Chu kì 3 (Z tăng dần từ trái sang phải):</span>
+                        <span className="text-indigo-600 font-mono font-bold text-[11px]">
+                          → Chiều tăng dần điện tích hạt nhân (+Z)
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 items-end text-center pt-3 pb-1">
+                        {[
+                          { sym: 'Na', name: 'Sodium', z: 11, r: 186, px: 56 },
+                          { sym: 'Mg', name: 'Magnesium', z: 12, r: 160, px: 48 },
+                          { sym: 'Al', name: 'Aluminium', z: 13, r: 143, px: 43 },
+                          { sym: 'Si', name: 'Silicon', z: 14, r: 117, px: 37 },
+                          { sym: 'P', name: 'Phosphorus', z: 15, r: 110, px: 33 },
+                          { sym: 'S', name: 'Sulfur', z: 16, r: 104, px: 30 },
+                          { sym: 'Cl', name: 'Chlorine', z: 17, r: 99, px: 27 },
+                        ].map((item) => (
+                          <div key={item.sym} className="flex flex-col items-center justify-end">
+                            <div className="h-16 flex items-center justify-center">
+                              <div
+                                className="rounded-full bg-gradient-to-br from-sky-300 via-sky-500 to-indigo-600 flex items-center justify-center shadow-xs border border-sky-400 text-white font-mono font-bold text-[10px]"
+                                style={{ width: `${item.px}px`, height: `${item.px}px` }}
+                              >
+                                {item.sym}
+                              </div>
+                            </div>
+                            <div className="font-display font-extrabold text-xs text-slate-900 mt-2">
+                              {item.name}
+                            </div>
+                            <div className="font-mono text-[10px] text-slate-500">
+                              Z = +{item.z}
+                            </div>
+                            <div className="font-mono font-extrabold text-xs text-indigo-700 mt-0.5">
+                              {item.r} pm
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Interactive Multiple Choice */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-bold text-slate-800">
+                        Chọn nhận định đúng nhất dựa trên hình vẽ:
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        {[
+                          { key: 'A', text: 'A. Tăng dần theo chiều tăng dần của điện tích hạt nhân' },
+                          { key: 'B', text: 'B. Giảm dần theo chiều tăng dần của điện tích hạt nhân' },
+                          { key: 'C', text: 'C. Không đổi do có cùng số lớp electron' },
+                          { key: 'D', text: 'D. Biến đổi ngẫu nhiên, không theo quy luật' },
+                        ].map((opt) => {
+                          const isSelected = periodObservationAnswer === opt.key;
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={() => setPeriodObservationAnswer(opt.key)}
+                              className={`p-3 rounded-xl border text-left font-semibold transition-all cursor-pointer ${
+                                isSelected
+                                  ? opt.key === 'B'
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                    : 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                                  : 'bg-white hover:bg-slate-50 text-slate-800 border-slate-200'
+                              }`}
+                            >
+                              {opt.text}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {periodObservationAnswer && (
+                        <div
+                          className={`p-4 rounded-xl border text-xs leading-relaxed space-y-1.5 mt-2 ${
+                            periodObservationAnswer === 'B'
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+                              : 'bg-rose-50 border-rose-300 text-rose-950'
+                          }`}
+                        >
+                          <div className="font-bold font-display text-sm flex items-center gap-1.5">
+                            {periodObservationAnswer === 'B' ? (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <span>Chính xác! Đáp án đúng là B: Bán kính nguyên tử GIẢM DẦN.</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                                <span>Chưa chính xác! Hãy quan sát kích thước các hình tròn trên sơ đồ.</span>
+                              </>
+                            )}
+                          </div>
+                          <p>
+                            <strong>Giải thích quy luật:</strong> Trong cùng 1 chu kì (ví dụ Chu kì 3), khi đi từ trái sang phải theo chiều tăng dần của điện tích hạt nhân: các nguyên tử đều có <strong>cùng 3 lớp electron</strong> (số lớp electron không đổi), nhưng <strong>điện tích hạt nhân lại tăng dần</strong> từ +11 (Sodium) đến +17 (Chlorine), làm <strong>lực hút của hạt nhân lên các electron ngoài cùng ngày càng mạnh hơn</strong>, kéo các electron lại sát gần hạt nhân hơn → <strong>Bán kính nguyên tử GIẢM DẦN</strong>: Na (186 pm) &gt; Mg (160) &gt; Al (143) &gt; Si (117) &gt; P (110) &gt; S (104) &gt; Cl (99 pm).
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-12 flex flex-wrap justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('explanation')}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <span>Tiếp theo: Phần II.2 & II.3. Quy luật & Giải thích chi tiết</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* PILLAR 2: II.2. QUY LUẬT BIẾN ĐỔI */}
-            {activeSubTab === 'how_it_changes' && (
-              <div className="pt-2 space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                  <div className="lg:col-span-6 space-y-4 flex flex-col justify-between">
-                    <div className="space-y-1">
-                      <div className="text-xs font-bold text-indigo-700">
-                        II. BÁN KÍNH NGUYÊN TỬ · 2. Quy luật biến đổi
-                      </div>
-                      <h3 className="font-display text-lg sm:text-xl font-extrabold text-slate-900">
-                        Xu hướng biến đổi bán kính nguyên tử:
-                      </h3>
-                    </div>
 
-                    <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/90 to-slate-50 border border-indigo-200 space-y-2">
-                      <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-700">
-                        <ArrowRight className="w-4 h-4" />
-                        <span>• Trong một chu kì (từ trái sang phải):</span>
-                      </div>
-                      <p className="text-sm text-slate-800 leading-relaxed">
-                        <strong>Trong một chu kì (từ trái sang phải):</strong> bán kính nguyên tử{' '}
-                        <strong className="text-indigo-700 underline decoration-indigo-300 underline-offset-4">
-                          giảm theo chiều tăng dần của điện tích hạt nhân
-                        </strong>.
-                      </p>
-                      <p className="text-xs text-slate-600 font-mono pt-1">
-                        Ví dụ Chu kì 2: Li (152 pm) &gt; Be (112) &gt; B (85) &gt; C (77) &gt; N (70) &gt; O (66) &gt; F (64 pm).
-                      </p>
-                    </div>
 
-                    <div className="p-5 rounded-2xl bg-gradient-to-br from-sky-50/90 to-slate-50 border border-sky-200 space-y-2">
-                      <div className="flex items-center gap-2 text-xs font-extrabold text-sky-700">
-                        <ArrowDown className="w-4 h-4" />
-                        <span>• Trong một nhóm A (từ trên xuống dưới):</span>
-                      </div>
-                      <p className="text-sm text-slate-800 leading-relaxed">
-                        <strong>Trong một nhóm A (từ trên xuống dưới):</strong> bán kính nguyên tử{' '}
-                        <strong className="text-sky-700 underline decoration-sky-300 underline-offset-4">
-                          tăng theo chiều tăng dần của điện tích hạt nhân
-                        </strong>.
-                      </p>
-                      <p className="text-xs text-slate-600 font-mono pt-1">
-                        Ví dụ Nhóm IA: Li (152 pm) &lt; Na (186) &lt; K (227) &lt; Rb (248) &lt; Cs (265 pm).
-                      </p>
-                    </div>
-                  </div>
 
-                  {/* Mini Visual Heatmap Schematic with Arrows */}
-                  <div className="lg:col-span-6 bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-bold text-slate-800">
-                        Minh họa Tô màu Đậm – Nhạt & Mũi tên chiều biến đổi (Nhóm A)
-                      </span>
-                      <span className="text-[11px] text-slate-500">Bấm vào ô để xem chi tiết</span>
-                    </div>
-                    <div className="relative bg-white border border-slate-200 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3 pl-8">
-                        <span className="text-[11px] font-bold text-indigo-800 whitespace-nowrap">
-                          Chu kì (Z tăng): Bán kính GIẢM DẦN
-                        </span>
-                        <div className="flex-1 h-1 rounded bg-gradient-to-r from-indigo-800 to-indigo-200 relative">
-                          <span className="absolute -right-1 -top-2.5 text-indigo-600 font-bold">→</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-stretch gap-3">
-                        <div className="flex flex-col items-center justify-between py-1 w-6">
-                          <span className="text-[10px] font-bold text-sky-800 [writing-mode:vertical-rl] rotate-180">
-                            Nhóm A: Bán kính TĂNG DẦN
-                          </span>
-                          <span className="text-sky-700 font-bold text-sm">↓</span>
-                        </div>
-
-                        <div className="flex-1 grid grid-cols-7 gap-1.5 text-center">
-                          {['IA', 'IIA', 'IIIA', 'IVA', 'VA', 'VIA', 'VIIA'].map((g) => (
-                            <div key={g} className="text-[10px] font-mono font-bold text-slate-500 pb-1">
-                              {g}
-                            </div>
-                          ))}
-                          {[
-                            ['Li', 'Be', 'B', 'C', 'N', 'O', 'F'],
-                            ['Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl'],
-                            ['K', 'Ca', 'Ga', 'Ge', 'As', 'Se', 'Br'],
-                            ['Rb', 'Sr', 'In', 'Sn', 'Sb', 'Te', 'I'],
-                          ].map((row, rIdx) =>
-                            row.map((sym) => {
-                              const el = ELEMENT_BY_SYMBOL[sym];
-                              const r = el?.atomicRadius ?? 100;
-                              const circleDiameter = Math.max(8, Math.min(28, Math.round(r / 8.5)));
-                              const shade =
-                                r >= 200
-                                  ? 'bg-indigo-950 text-white border border-indigo-700'
-                                  : r >= 155
-                                  ? 'bg-indigo-700 text-white border border-indigo-500'
-                                  : r >= 125
-                                  ? 'bg-indigo-600 text-white border border-indigo-500'
-                                  : r >= 95
-                                  ? 'bg-indigo-100 text-slate-950 border border-indigo-300'
-                                  : 'bg-indigo-50 text-slate-950 border border-indigo-200';
-                              return (
-                                <button
-                                  key={`${rIdx}-${sym}`}
-                                  type="button"
-                                  onClick={() => el && onSelectElementOnTable(el)}
-                                  className={`p-1.5 rounded-lg flex flex-col items-center justify-center gap-1 transition-transform hover:scale-105 cursor-pointer ${shade}`}
-                                  title={`Bấm để xem ${sym} (${r} pm) trên Bảng tuần hoàn`}
-                                >
-                                  <span
-                                    className="rounded-full bg-current opacity-40 inline-block"
-                                    style={{ width: `${circleDiameter}px`, height: `${circleDiameter}px` }}
-                                  />
-                                  <span className="font-display text-xs font-extrabold leading-none">{sym}</span>
-                                  <span className="font-mono text-[9px] font-bold leading-none">{r}</span>
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Interactive Chart: Explore any Period or Group A */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-2.5">
-                      <BarChart3 className="w-5 h-5 text-sky-600" />
-                      <div>
-                        <h4 className="font-display text-base font-extrabold text-slate-900">
-                          Biểu đồ tương tác & Hình cầu nguyên tử tỉ lệ thực (Đơn vị: pm)
-                        </h4>
-                        <p className="text-xs text-slate-600">
-                          Bấm chọn Chu kì (2–6) hoặc Nhóm A (IA–VIIA) để quan sát sự thay đổi kích thước nguyên tử
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="flex flex-wrap p-1 bg-white border border-slate-200 rounded-xl gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setChartDimension('period')}
-                          className={`px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                            chartDimension === 'period'
-                              ? 'bg-slate-900 text-white'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          Theo Chu kì (Trái → Phải)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setChartDimension('groupA')}
-                          className={`px-2.5 sm:px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                            chartDimension === 'groupA'
-                              ? 'bg-slate-900 text-white'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          Theo Nhóm A (Trên → Dưới)
-                        </button>
-                      </div>
-
-                      {chartDimension === 'period' ? (
-                        <div className="flex flex-wrap p-1 bg-white border border-slate-200 rounded-xl gap-1">
-                          {PERIOD_LIST.map((p) => (
-                            <button
-                              key={p}
-                              type="button"
-                              onClick={() => setSelectedPeriod(p)}
-                              className={`px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg transition-colors cursor-pointer ${
-                                selectedPeriod === p
-                                  ? 'bg-sky-600 text-white'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              Chu kì {p}
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-wrap p-1 bg-white border border-slate-200 rounded-xl gap-1">
-                          {GROUP_A_LIST.map((g) => (
-                            <button
-                              key={g}
-                              type="button"
-                              onClick={() => setSelectedGroupA(g)}
-                              className={`px-2.5 py-1.5 text-xs font-mono font-bold rounded-lg transition-colors cursor-pointer ${
-                                selectedGroupA === g
-                                  ? 'bg-sky-600 text-white'
-                                  : 'text-slate-600 hover:text-slate-900'
-                              }`}
-                            >
-                              {g}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 rounded-xl p-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-7 gap-4 items-end min-h-[240px] pt-6">
-                      {chartElements.map((el) => {
-                        const r = el.atomicRadius ?? 100;
-                        const heightPercent = Math.max(18, Math.min(100, Math.round((r / 270) * 100)));
-                        const sphereSize = Math.max(18, Math.min(68, Math.round(r / 4.0)));
-
-                        return (
-                          <button
-                            key={el.atomicNumber}
-                            type="button"
-                            onClick={() => onSelectElementOnTable(el)}
-                            className="group flex flex-col items-center justify-end h-full text-center focus:outline-none cursor-pointer"
-                          >
-                            <div className="h-18 flex items-center justify-center mb-2">
-                              <div
-                                className="rounded-full flex items-center justify-center transition-transform group-hover:scale-110 shadow-sm border border-sky-400/60"
-                                style={{
-                                  width: `${sphereSize}px`,
-                                  height: `${sphereSize}px`,
-                                  background:
-                                    'radial-gradient(circle at 32% 32%, #e0f2fe 0%, #38bdf8 55%, #0369a1 100%)',
-                                }}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
-                              </div>
-                            </div>
-
-                            <span className="font-mono text-xs font-extrabold text-slate-900 tabular-nums mb-1">
-                              {r} pm
-                            </span>
-
-                            <div className="w-full max-w-[46px] h-28 bg-slate-100 rounded-t-xl flex items-end overflow-hidden p-0.5">
-                              <div
-                                className="w-full rounded-t-lg bg-gradient-to-t from-indigo-700 via-sky-600 to-sky-400 transition-all duration-300"
-                                style={{ height: `${heightPercent}%` }}
-                              />
-                            </div>
-
-                            <div className="mt-2 pt-1.5 border-t border-slate-100 w-full">
-                              <div className="font-display text-sm font-extrabold text-slate-900">
-                                {el.symbol}{' '}
-                                <span className="font-mono text-[11px] font-normal text-slate-500">
-                                  (Z={el.atomicNumber})
-                                </span>
-                              </div>
-                              <div className="text-[11px] text-slate-500">
-                                {el.vietnameseName} · {el.period} lớp e
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* PILLAR 3: II.3. GIẢI THÍCH & EM CÓ BIẾT: NĂNG LƯỢNG ION HÓA THỨ NHẤT */}
             {activeSubTab === 'explanation' && (
@@ -1406,446 +1101,40 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                     })}
                   </div>
                 </div>
+
+                <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('sorting_practice')}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <span>Tiếp theo: Luyện tập Sắp xếp bán kính nguyên tử (Bài tập)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* PILLAR 4: VÍ DỤ & MÁY SO SÁNH BÁN KÍNH */}
-            {activeSubTab === 'examples' && (
+            {/* PILLAR 4: BÀI TẬP SẮP XẾP BÁN KÍNH NGUYÊN TỬ (HÌNH 3) */}
+            {activeSubTab === 'sorting_practice' && (
               <div className="pt-2 space-y-6">
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <Scale className="w-5 h-5 text-sky-600" />
-                      <div>
-                        <h3 className="font-display text-base font-extrabold text-slate-900">
-                          Máy so sánh bán kính nguyên tử tự động
-                        </h3>
-                        <p className="text-xs text-slate-600">
-                          Bấm chọn từ 2 đến 6 nguyên tố bên dưới để tự động sắp xếp chiều tăng / giảm bán kính
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                <AtomicRadiusSortingGame />
 
-                  <div className="flex flex-wrap gap-1.5">
-                    {POPULAR_COMPARE_SYMBOLS.map((sym) => {
-                      const el = ELEMENT_BY_SYMBOL[sym];
-                      const isPicked = compareSymbols.includes(sym);
-                      return (
-                        <button
-                          key={sym}
-                          type="button"
-                          onClick={() => toggleCompareSymbol(sym)}
-                          className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer ${
-                            isPicked
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
-                          }`}
-                        >
-                          {sym} (Z={el?.atomicNumber})
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-200">
-                        <span className="text-sky-900 font-semibold block mb-1">
-                          Chiều TĂNG DẦN bán kính nguyên tử:
-                        </span>
-                        <div className="font-mono text-sm font-extrabold text-slate-900">
-                          {comparedElementsAsc
-                            .map((el) => `R(${el.symbol}) [${el.atomicRadius} pm]`)
-                            .join(' < ')}
-                        </div>
-                      </div>
-                      <div className="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200">
-                        <span className="text-indigo-900 font-semibold block mb-1">
-                          Chiều GIẢM DẦN bán kính nguyên tử:
-                        </span>
-                        <div className="font-mono text-sm font-extrabold text-slate-900">
-                          {comparedElementsDesc
-                            .map((el) => `R(${el.symbol}) [${el.atomicRadius} pm]`)
-                            .join(' > ')}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 pt-2">
-                      {comparedElementsAsc.map((el, i) => {
-                        const size = Math.max(22, Math.min(70, Math.round((el.atomicRadius ?? 100) / 3.7)));
-                        return (
-                          <div
-                            key={el.symbol}
-                            className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 flex flex-col items-center justify-end text-center"
-                          >
-                            <div className="h-20 flex items-center justify-center">
-                              <div
-                                className="rounded-full flex items-center justify-center shadow-xs border border-sky-400/60"
-                                style={{
-                                  width: `${size}px`,
-                                  height: `${size}px`,
-                                  background:
-                                    'radial-gradient(circle at 32% 32%, #e0f2fe 0%, #38bdf8 55%, #0369a1 100%)',
-                                }}
-                              >
-                                <span className="font-mono text-[10px] font-extrabold text-white drop-shadow-xs">
-                                  {el.symbol}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="font-display text-xs font-extrabold text-slate-900 mt-1">
-                              #{i + 1}. {el.name} ({el.symbol})
-                            </div>
-                            <div className="text-[11px] text-slate-500">
-                              Chu kì {el.period} · Nhóm {el.groupRoman}
-                            </div>
-                            <div className="font-mono text-xs font-extrabold text-indigo-700 mt-0.5">
-                              {el.atomicRadius} pm
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3 Worked Textbook Examples */}
-                <div className="space-y-4">
-                  <h3 className="font-display text-lg font-extrabold text-slate-900">
-                    Các ví dụ mẫu giải chi tiết từng bước
-                  </h3>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {WORKED_EXAMPLES.map((ex) => (
-                      <div
-                        key={ex.id}
-                        className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4"
-                      >
-                        <div className="space-y-2.5">
-                          <div className="text-xs text-indigo-600 font-bold">
-                            Mức độ: {ex.level}
-                          </div>
-                          <h4 className="font-display text-base font-extrabold text-slate-900">
-                            {ex.title}
-                          </h4>
-                          <p className="text-xs text-slate-800 bg-white p-3.5 rounded-xl border border-slate-200 leading-relaxed font-medium">
-                            <strong>Đề bài:</strong> {ex.problem}
-                          </p>
-                          <div className="space-y-1.5 pt-1">
-                            {ex.steps.map((step, sIdx) => (
-                              <p key={sIdx} className="text-xs text-slate-600 leading-relaxed">
-                                {step}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 font-semibold flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                          <span>{ex.conclusion}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSubTab('periodic_links')}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <span>Tiếp theo: Tổng hợp liên hệ Bán kính, I₁ &amp; Độ âm điện</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* PILLAR 5 (NEW - IDEA 1): PHÒNG THÍ NGHIỆM SO SÁNH NGUYÊN TỬ & ION */}
-            {activeSubTab === 'ion_lab' && (
-              <div className="pt-2 space-y-6">
-                {/* Core Rule Summary Banner */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 space-y-1">
-                    <div className="text-xs font-extrabold text-sky-800">
-                      1. Khi Kim loại nhường e tạo Cation (Mⁿ⁺)
-                    </div>
-                    <div className="font-mono text-base font-extrabold text-slate-900">
-                      R(Cation Mⁿ⁺) &lt; R(Nguyên tử M)
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Vì mất toàn bộ electron lớp ngoài cùng (giảm đi 1 lớp e) và hạt nhân hút các electron còn lại mạnh hơn.
-                    </p>
-                  </div>
 
-                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1">
-                    <div className="text-xs font-extrabold text-amber-800">
-                      2. Khi Phi kim nhận e tạo Anion (Xᵐ⁻)
-                    </div>
-                    <div className="font-mono text-base font-extrabold text-slate-900">
-                      R(Anion Xᵐ⁻) &gt; R(Nguyên tử X)
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Vì nhận thêm electron làm tăng lực đẩy giữa các electron trong đám mây, khiến lớp vỏ phình to ra.
-                    </p>
-                  </div>
 
-                  <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200 space-y-1">
-                    <div className="text-xs font-extrabold text-indigo-800">
-                      3. Dãy các hạt Đẳng Electron (Cùng số e)
-                    </div>
-                    <div className="font-mono text-base font-extrabold text-slate-900">
-                      Z càng lớn → Bán kính càng nhỏ
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Cùng cấu hình 1s²2s²2p⁶ (10e): R(O²⁻) &gt; R(F⁻) &gt; R(Na⁺) &gt; R(Mg²⁺) &gt; R(Al³⁺).
-                    </p>
-                  </div>
-                </div>
-
-                {/* Interactive Atom <-> Ion Transformer */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 space-y-5">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                    <div>
-                      <div className="text-xs font-bold text-indigo-600">
-                        Mô phỏng trực quan quá trình Nhường / Nhận electron
-                      </div>
-                      <h3 className="font-display text-lg sm:text-xl font-extrabold text-slate-900 mt-0.5">
-                        Bấm nút biến đổi giữa Nguyên tử trung hòa và Ion tương ứng
-                      </h3>
-                    </div>
-
-                    {/* Choose element to ionize */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {ION_LAB_ITEMS.map((item, idx) => (
-                        <button
-                          key={item.symbol}
-                          type="button"
-                          onClick={() => {
-                            setSelectedIonIdx(idx);
-                            setIsIonized(false);
-                          }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all cursor-pointer ${
-                            selectedIonIdx === idx
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
-                          }`}
-                        >
-                          {item.symbol} → {item.ionSymbol}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    {/* Left 6 Cols: Controls & Explanation */}
-                    <div className="lg:col-span-6 space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setIsIonized(false)}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            !isIonized
-                              ? 'bg-slate-900 text-white shadow-sm'
-                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          Trạng thái 1: Nguyên tử {currentIonItem.symbol} trung hòa
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setIsIonized(true)}
-                          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                            isIonized
-                              ? currentIonItem.type === 'cation'
-                                ? 'bg-sky-600 text-white shadow-sm'
-                                : 'bg-amber-600 text-white shadow-sm'
-                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          Trạng thái 2: {currentIonItem.actionLabel}
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div
-                          className={`p-4 rounded-xl border transition-all ${
-                            !isIonized
-                              ? 'bg-white border-slate-900 ring-1 ring-slate-900'
-                              : 'bg-white/60 border-slate-200'
-                          }`}
-                        >
-                          <div className="text-slate-500 font-semibold">
-                            Nguyên tử {currentIonItem.symbol} (Z={currentIonItem.z})
-                          </div>
-                          <div className="font-mono text-lg font-extrabold text-slate-900 mt-1">
-                            R = {currentIonItem.atomRadius} pm
-                          </div>
-                          <div className="font-mono text-[11px] text-slate-600 mt-1">
-                            Cấu hình: {currentIonItem.atomConfig}
-                          </div>
-                          <div className="font-mono text-[11px] text-slate-500">
-                            Phân bố lớp: {currentIonItem.atomShells.join(' - ')} ({currentIonItem.atomShells.length} lớp)
-                          </div>
-                        </div>
-
-                        <div
-                          className={`p-4 rounded-xl border transition-all ${
-                            isIonized
-                              ? 'bg-white border-indigo-600 ring-1 ring-indigo-600'
-                              : 'bg-white/60 border-slate-200'
-                          }`}
-                        >
-                          <div className="text-indigo-700 font-semibold">
-                            Ion {currentIonItem.ionSymbol} (Z={currentIonItem.z})
-                          </div>
-                          <div className="font-mono text-lg font-extrabold text-indigo-700 mt-1">
-                            R = {currentIonItem.ionRadius} pm
-                          </div>
-                          <div className="font-mono text-[11px] text-slate-600 mt-1">
-                            Cấu hình: {currentIonItem.ionConfig}
-                          </div>
-                          <div className="font-mono text-[11px] text-slate-500">
-                            Phân bố lớp: {currentIonItem.ionShells.join(' - ')} ({currentIonItem.ionShells.length} lớp)
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs text-slate-700 leading-relaxed">
-                        <strong className="text-slate-900 block mb-1">
-                          Giải thích sự thay đổi bán kính ({currentIonItem.atomRadius} pm → {currentIonItem.ionRadius} pm):
-                        </strong>
-                        {currentIonItem.explanation}
-                      </div>
-                    </div>
-
-                    {/* Right 6 Cols: Dynamic SVG Atom vs Ion Visualizer */}
-                    <div className="lg:col-span-6 bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 flex flex-col items-center justify-center">
-                      <div className="text-xs font-bold text-sky-300 mb-2">
-                        {isIonized
-                          ? `Mô hình Ion ${currentIonItem.ionSymbol} — Bán kính: ${currentIonItem.ionRadius} pm`
-                          : `Mô hình Nguyên tử ${currentIonItem.symbol} — Bán kính: ${currentIonItem.atomRadius} pm`}
-                      </div>
-
-                      <svg width="240" height="220" viewBox="0 0 240 220" className="overflow-visible">
-                        {/* Ghost outline of neutral atom radius for reference */}
-                        <circle
-                          cx="120"
-                          cy="110"
-                          r={Math.round(currentIonItem.atomRadius / 2.2)}
-                          fill="none"
-                          stroke="rgba(148, 163, 184, 0.35)"
-                          strokeWidth="1.5"
-                          strokeDasharray="4 4"
-                        />
-
-                        {/* Active electron cloud */}
-                        <circle
-                          cx="120"
-                          cy="110"
-                          r={Math.round(activeRadius / 2.2)}
-                          fill={
-                            currentIonItem.type === 'cation'
-                              ? 'rgba(56, 189, 248, 0.2)'
-                              : 'rgba(251, 191, 36, 0.2)'
-                          }
-                          stroke={currentIonItem.type === 'cation' ? '#38bdf8' : '#fbbf24'}
-                          strokeWidth="2.5"
-                          className="transition-all duration-300"
-                        />
-
-                        {/* Concentric Shells */}
-                        {activeShells.map((elecCount, sIdx) => {
-                          const outerR = Math.round(activeRadius / 2.2);
-                          const r = ((sIdx + 1) / activeShells.length) * outerR;
-                          return (
-                            <g key={sIdx}>
-                              <circle
-                                cx="120"
-                                cy="110"
-                                r={r}
-                                fill="none"
-                                stroke="rgba(255,255,255,0.35)"
-                                strokeWidth="1"
-                              />
-                              {Array.from({ length: elecCount }).map((_, eIdx) => {
-                                const angle = (2 * Math.PI * eIdx) / elecCount - Math.PI / 2;
-                                const cx = 120 + r * Math.cos(angle);
-                                const cy = 110 + r * Math.sin(angle);
-                                return (
-                                  <circle
-                                    key={eIdx}
-                                    cx={cx}
-                                    cy={cy}
-                                    r="3.2"
-                                    fill={currentIonItem.type === 'cation' ? '#38bdf8' : '#fbbf24'}
-                                  />
-                                );
-                              })}
-                            </g>
-                          );
-                        })}
-
-                        {/* Nucleus */}
-                        <circle cx="120" cy="110" r="16" fill="#0284c7" />
-                        <text
-                          x="120"
-                          y="114"
-                          textAnchor="middle"
-                          className="fill-white font-mono text-[11px] font-extrabold"
-                        >
-                          +{currentIonItem.z}
-                        </text>
-                      </svg>
-
-                      <div className="text-[11px] text-slate-300 text-center mt-2">
-                        Vòng nét đứt là kích thước nguyên tử trung hòa ban đầu ({currentIonItem.atomRadius} pm) để đối chiếu.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Isoelectronic Series 10e Visual Comparison */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-                  <div>
-                    <h4 className="font-display text-base font-extrabold text-slate-900">
-                      So sánh kinh điển trong đề thi: Dãy các ion đẳng electron (Cùng có 10e: 1s² 2s² 2p⁶)
-                    </h4>
-                    <p className="text-xs text-slate-600">
-                      Tất cả 5 ion dưới đây đều có 2 lớp electron (2, 8), nhưng khi điện tích hạt nhân (+Z) tăng từ +8 đến +13 thì bán kính giảm liên tục:
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    {ISOELECTRONIC_10E.map((ion) => {
-                      const size = Math.max(24, Math.min(72, Math.round(ion.radius / 2.0)));
-                      return (
-                        <div
-                          key={ion.label}
-                          className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-end text-center"
-                        >
-                          <div className="h-20 flex items-center justify-center">
-                            <div
-                              className="rounded-full flex items-center justify-center shadow-xs border border-indigo-400/60"
-                              style={{
-                                width: `${size}px`,
-                                height: `${size}px`,
-                                background:
-                                  'radial-gradient(circle at 32% 32%, #e0e7ff 0%, #6366f1 60%, #312e81 100%)',
-                              }}
-                            >
-                              <span className="font-mono text-xs font-extrabold text-white">
-                                {ion.label}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="font-display text-sm font-extrabold text-slate-900 mt-2">
-                            Ion {ion.label} (Z = +{ion.z})
-                          </div>
-                          <div className="text-[11px] text-slate-500">
-                            {ion.electrons} electron · {ion.config}
-                          </div>
-                          <div className="font-mono text-sm font-extrabold text-indigo-700 mt-1">
-                            R = {ion.radius} pm
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* PILLAR 6 (NEW - IDEA 4): LIÊN HỆ ĐỒNG BỘ BÁN KÍNH ↔ ĐỘ ÂM ĐIỆN & TÍNH KIM LOẠI / PHI KIM */}
             {activeSubTab === 'periodic_links' && (
