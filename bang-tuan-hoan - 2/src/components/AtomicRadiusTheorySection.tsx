@@ -314,14 +314,14 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                             Cột 3 → 12 IUPAC
                           </span>
                         </div>
-                        <p className="text-xs text-slate-700 leading-relaxed">
-                          Gồm 8 nhóm B (IB đến VIIIB). Cấu hình electron hóa trị tổng quát của các nguyên tố khối d là:
-                        </p>
-                        <div className="p-2.5 rounded-lg bg-white border border-amber-300 font-mono text-xs font-bold text-amber-950 text-center">
-                          (n - 1)d<sup>x</sup> ns<sup>y</sup> &nbsp;&nbsp;(với 1 ≤ x ≤ 10;&nbsp; y = 1 ÷ 2)
+                       <p className="text-xs text-slate-700 leading-relaxed">
+                        Gồm 8 nhóm B (IB đến VIIIB). Cấu hình electron của các nguyên tố khối d (tiêu biểu Chu kì 4 theo SGK Hóa 10) là:
+                      </p>
+                        <div className="p-2.5 rounded-lg bg-white border border-amber-300 font-mono text-xs sm:text-sm font-bold text-amber-950 text-center shadow-2xs">
+                          [Ar] 3d<sup>x</sup> 4s<sup>y</sup> &nbsp;&nbsp;(với 1 ≤ x ≤ 10;&nbsp; 1 ≤ y ≤ 2)
                         </div>
                         <p className="text-xs text-slate-800 font-medium">
-                          Tổng số electron hóa trị: <strong className="font-mono text-indigo-700">S = x + y</strong>. Quy tắc xác định nhóm B chuẩn quốc tế (IUPAC, Wikipedia &amp; SGK Hóa 10) như sau:
+                          Tổng số electron hóa trị: <strong className="font-mono text-indigo-700">S = x + y</strong>
                         </p>
                       </div>
                     </div>
@@ -333,7 +333,6 @@ export const AtomicRadiusTheorySection: React.FC<AtomicRadiusTheorySectionProps>
                           <TableProperties className="w-4 h-4 text-indigo-600" />
                           <span>Bảng quy tắc xác định nhóm B theo tổng electron hóa trị S = x + y:</span>
                         </span>
-                        <span className="text-[11px] text-slate-500 font-mono">Chuẩn Wikipedia &amp; IUPAC</span>
                       </div>
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-xs">
